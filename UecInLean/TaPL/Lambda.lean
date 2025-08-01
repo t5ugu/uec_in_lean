@@ -1,5 +1,5 @@
 
-namespace UEC.tapl
+namespace UecInLean.TaPL
 
 -- 型システム入門 プログラミング言語と型の理論 ISBN 978-4-274-06911-6
 
@@ -7,10 +7,13 @@ inductive Lambda
   | var (n : Nat)
   | abs (t : Lambda)
   | app (t₁ t₂ : Lambda)
-infixl:200 " ⬝ " => Lambda.app
-notation:200 "L." t:100 => Lambda.abs t
 /-- いちばん左の束縛変数を `Lambda` にすれば、`Lambda.app` 連鎖が見やすい -/
 prefix:max "$" => Lambda.var
+notation:200 "L." t:100 => Lambda.abs t
+infixl:200 " ⬝ " => Lambda.app
+
+instance (n : Nat) : OfNat Lambda n where
+  ofNat := $ n
 
 instance : CoeFun Lambda (fun _ => Lambda → Lambda) where
   coe := Lambda.app
@@ -36,16 +39,13 @@ where
 instance : ToString Lambda where
   toString := toString
 
-instance (n : Nat) : OfNat Lambda n where
-  ofNat := Lambda.var n
-
 /-- de Bruijn インデックス。Lambda が n項(内からn個目の`L.`に包まれている)であること -/
 inductive deBruijn : Nat -> Lambda -> Prop
-  | var {i n} : i < n -> deBruijn n (.var i)
+  | var {i n} : i < n -> deBruijn n ($ i)
   | abs {n t₁} : deBruijn (n + 1) t₁ -> deBruijn n (L. t₁)
   | app {n t₁ t₂} : deBruijn n t₁ -> deBruijn n t₂ -> deBruijn n (t₁ ⬝ t₂)
 
-theorem deBruijn_var_iff {i n} : deBruijn n (.var i) ↔ i < n := by {
+theorem deBruijn_var_iff {i n} : deBruijn n ($ i) ↔ i < n := by {
   constructor
   · intro h
     rcases h with ⟨h⟩
@@ -86,13 +86,14 @@ theorem deBruijn_cast {n d t} (h : deBruijn n t) : deBruijn (n + d) t := by {
     · exact deBruijn_cast (deBurijn_app_left h)
     · exact deBruijn_cast (deBurijn_app_right h)
 }
+
 /--
   var: 打ち切り値 c 以上のインデックスをシフト数 d だけ持ち上げる
   abs: 抽象の中では束縛変数のインデックスが 1 つ増える
   app: それぞれシフト
 -/
 def shift (c d : Nat) : Lambda -> Lambda
-  | .var k => if k < c then .var k else .var (k + d)
+  | $ k => if k < c then $ k else $ (k + d)
   | L. t₁ => L. (shift (c + 1) d t₁)
   | t₁ ⬝ t₂ => shift c d t₁ ⬝ shift c d t₂
 
@@ -122,7 +123,7 @@ theorem deBruijn_shift {n c d t} (h : deBruijn n t) : deBruijn (n + d) (shift c 
 }
 
 def subst (j : Nat) (s : Lambda) : Lambda -> Lambda
-  | .var k => if k = j then s else .var k
+  | $ k => if k = j then s else $ k
   | L. t₁ => L. (subst (j + 1) (shift 0 1 s) t₁)
   | t₁ ⬝ t₂ => subst j s t₁ ⬝ subst j s t₂
 notation:max "[" j:0 " ↦ " s:0 "] " t:300 => subst j s t
@@ -150,62 +151,48 @@ theorem subst_deBruijn {n j s t} (hs : deBruijn n s) (ht : deBruijn n t) (h : j 
 
 /-- `.var 0` が存在しない保障がないと、おかしくなるかも? -/
 def downshift (c : Nat) : Lambda -> Lambda
-  | .var k => if k < c then .var k else .var (k - 1)
+  | $ k => if k < c then $ k else $ (k - 1)
   | L. t₁ => L. (downshift (c + 1) t₁)
   | t₁ ⬝ t₂ => downshift c t₁ ⬝ downshift c t₂
 
-/-- t 中の c以下を 0→s, (n+1)→n に -/
 abbrev substitute (c : Nat) (s t : Lambda) : Lambda := downshift c (subst c (shift c 1 s) t)
 
-/-- TaPL, 正規順序戦略 -/
+/-- TaPL, 正規順序戦略, leftmost outermost -/
 def stepNormalOrder : Lambda -> Option Lambda := recu 0
 where
   recu (depth : Nat) : Lambda -> Option Lambda
   | (L. t₁) ⬝ t₂ => substitute depth t₂ t₁
-  | L. t₁ => (L. ·) <$> recu (depth + 1) t₁
+  | L. t => (L. ·) <$> recu (depth + 1) t
   | t₁ ⬝ t₂ => (· ⬝ t₂) <$> recu depth t₁
   | _ => none
 
-/-- TaPL, 名前呼び戦略 -/
+/-- TaPL, 名前呼び戦略, leftmost outermost w/o reduce inside abs -/
 def stepCallByName : Lambda -> Option Lambda
   | (L. t₁) ⬝ t₂ => substitute 0 t₂ t₁
   | t₁ ⬝ t₂ => (· ⬝ t₂) <$> stepCallByName t₁
   | _ => none
 
-/-- TaPL, 値呼び戦略 -/
+/-- TaPL, 値呼び戦略, leftmost innermost w/o reduce inside abs -/
 def stepCallByValue : Lambda -> Option Lambda
   | (L. t₁) ⬝ (L. t₂) => substitute 0 (L. t₂) t₁
   | (L. t₁) ⬝ t₂ => ((L. t₁) ⬝ ·) <$> stepCallByValue t₂
   | t₁ ⬝ t₂ => (· ⬝ t₂) <$> stepCallByValue t₁
   | _ => none
 
-/-- Pratik Thanki. https://pratikthanki.github.io/posts/lambda-calculus-beta-reduction/ -/
-def stepApplicative (t : Lambda) : Option Lambda :=
-  match recu 0 t with
-  | t :: _ => t
-  | [] => none
+/-- Pratik Thanki. https://pratikthanki.github.io/posts/lambda-calculus-beta-reduction/, leftmost innermost -/
+def stepApplicative : Lambda -> Option Lambda := recu 0
 where
-  recu (depth : Nat) : Lambda -> List Lambda
+  recu (depth : Nat) : Lambda -> Option Lambda
   | (L. m) ⬝ n =>
     (· ⬝ n) <$> (L. ·) <$> recu depth m
-    ++ ((L. m) ⬝ ·) <$> recu depth n
-    ++ [substitute (depth) n m]
+    <|> ((L. m) ⬝ ·) <$> recu depth n
+    <|> substitute depth n m
   | m ⬝ n =>
     (· ⬝ n) <$> recu depth m
-    ++ (m ⬝ ·) <$> recu depth n
+    <|> (m ⬝ ·) <$> recu depth n
   | L. m =>
     (L. ·) <$> recu (depth + 1) m
-  | .var _ => []
-
-/-- rooooomania, https://qiita.com/rooooomania/items/752eee2bd5d202257405 -/
-def stepEager : Lambda -> Option Lambda
-  | (L. t₁) ⬝ t₂ => substitute 0 t₂ t₁
-  | t₁ ⬝ t₂ => do {
-    let t₁' ← stepEager t₁
-    let t₂' ← stepEager t₂
-    some (t₁' ⬝ t₂')
-  }
-  | t => some t
+  | .var _ => none
 
 def beta (restStep: Nat) (step : Lambda -> Option Lambda) (t : Lambda) : Lambda :=
   match restStep, step t with
@@ -228,62 +215,62 @@ def exa : Lambda := (L. 0) ⬝ ((L. 0) ⬝ (L. (L. 0) ⬝ 1))
   >>= stepCallByValue -- none
 #eval exa -- id (id (λ1. "id" 1))
   >>= stepApplicative -- id ("id" (λ0. 0))
-  >>= stepApplicative -- "id" id
-  >>= stepApplicative -- id
+  >>= stepApplicative -- "id" (λ0. 0)
+  >>= stepApplicative -- λ0. 0
   >>= stepApplicative -- none
 
 def tru := L. L. 1
 def fls := L. L. 0
 def test := L. L. L. 2 ⬝ 1 ⬝ 0
-#eval beta 100 stepNormalOrder (test tru 100 200)
+#eval beta 100 stepNormalOrder (test tru 100 200) -- 100
 
 def and := L. L. $1 0 fls
-#eval beta 100 stepNormalOrder (and tru tru)
-#eval beta 100 stepNormalOrder (and tru fls)
+#eval beta 100 stepNormalOrder (and tru tru) -- tru
+#eval beta 100 stepNormalOrder (and tru fls) -- fls
 
 /-- 演習5.2.1 -/
 def or := L. L. $1 tru 0
-#eval beta 100 stepNormalOrder (or tru tru)
-#eval beta 100 stepNormalOrder (or tru fls)
+#eval beta 100 stepNormalOrder (or tru tru) -- tru
+#eval beta 100 stepNormalOrder (or tru fls) -- tru
 
 /-- 演習5.2.1 -/
 def not := L. $0 fls tru
-#eval beta 100 stepNormalOrder (not tru)
+#eval beta 100 stepNormalOrder (not tru) -- fls
 
 def pair := L. L. L. 0 ⬝ 2 ⬝ 1
-def fst := L. $0 tru -- tru に 2つラムダ抽象があるので、0でなく2なのでは...? そうするとバグるけど。
-def snd := L. $0 fls
+def fst := L. 0 ⬝ tru -- tru に 2つラムダ抽象があるので、0でなく2なのでは...? そうするとバグるけど。
+def snd := L. 0 ⬝ fls
 
-#eval beta 100 stepNormalOrder (fst (pair 100 200))
+#eval beta 100 stepNormalOrder (fst (pair 100 200)) -- 100
 
 def zro : Lambda := L. L. 0
 def one : Lambda := L. L. 1 ⬝ 0
 def two : Lambda := L. L. 1 ⬝ (1 ⬝ 0)
 def thr : Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ 0))
-def four : Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ 0)))
-def five : Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ 0))))
+def four: Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ 0)))
+def five: Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ 0))))
 def six : Lambda := L. L. 1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ (1 ⬝ 0)))))
-#eval beta 100 stepNormalOrder ((two) fst (pair (pair 100 200) 300))
+#eval beta 100 stepNormalOrder ((two) fst (pair (pair 100 200) 300)) -- 100
 
 def scc : Lambda := L. L. L. 1 ⬝ (2 ⬝ 1 ⬝ 0)
-#eval beta 100 stepNormalOrder ((scc one) fst (pair (pair 100 200) 300))
+#eval beta 100 stepNormalOrder ((scc one) fst (pair (pair 100 200) 300)) -- 100
 
 /-- 演習5.2.2 -/
 def scc2 : Lambda := L. L. L. 2 ⬝ 1 ⬝ (1 ⬝ 0)
-#eval beta 100 stepNormalOrder ((scc2 one) fst (pair (pair 100 200) 300))
+#eval beta 100 stepNormalOrder ((scc2 one) fst (pair (pair 100 200) 300)) -- 100
 
 def plus : Lambda := L. L. L. L. 3 ⬝ 1 ⬝ (2 ⬝ 1 ⬝ 0) -- λm n s z. m s (n s z)
-#eval beta 100 stepNormalOrder ((plus one two) fst (pair (pair (pair 100 200) 300) 400))
+#eval beta 100 stepNormalOrder ((plus one two) fst (pair (pair (pair 100 200) 300) 400)) -- 100
 
 def times : Lambda := L. L. $1 (plus 0) zro -- λm n. m (plus n) z
-#eval beta 100 stepNormalOrder ((times one two) fst (pair (pair 100 200) 300))
+#eval beta 100 stepNormalOrder ((times one two) fst (pair (pair 100 200) 300)) -- 100
 
 /-- 演習5.2.3
   λm n s. m (n s)
   (λz. (λw. s ..n.. s w) ..m.. (λw. s ..n.. s w) z)
  -/
 def times3 : Lambda := L. L. L. 2 ⬝ (1 ⬝ 0)
-#eval beta 100 stepNormalOrder ((times3 one two) fst (pair (pair 100 200) 300))
+#eval beta 100 stepNormalOrder ((times3 one two) fst (pair (pair 100 200) 300)) -- 100
 
 /-- 演習5.2.4
   m^n = (m回やる) を n回やる
@@ -291,14 +278,14 @@ def times3 : Lambda := L. L. L. 2 ⬝ (1 ⬝ 0)
 def pow : Lambda := L. L. 0 ⬝ 1
 
 def iszro : Lambda := L. $0 (L. fls) tru
-#eval beta 100 stepNormalOrder (iszro zro)
-#eval beta 100 stepNormalOrder (iszro two)
+#eval beta 100 stepNormalOrder (iszro zro) -- tru
+#eval beta 100 stepNormalOrder (iszro two) -- fls
 
 def prd : Lambda := L. fst ($0 ss zz)
 where
   zz := pair zro zro
   ss := L. pair (snd 0) (plus one (snd 0))
-#eval beta 100 stepNormalOrder (prd zro) -- prd(zro) = tru でおもしろい
+#eval beta 100 stepNormalOrder (prd zro) -- prd(zro) = zro
 
 /-- 演習5.2.5
   λ m n.
@@ -311,8 +298,8 @@ def sub : Lambda := L. L. $0 prd 1
   iszro sub m n
 -/
 def equal : Lambda := L. L. and (iszro (sub 0 1)) (iszro (sub 1 0))
-#eval beta 1000 stepNormalOrder (equal thr thr)
-#eval beta 1000 stepNormalOrder (equal thr two)
+#eval beta 1000 stepNormalOrder (equal thr thr) -- tru
+#eval beta 1000 stepNormalOrder (equal thr two) -- fls
 
 /-- 演習5.2.8
   nil: λc n. n
