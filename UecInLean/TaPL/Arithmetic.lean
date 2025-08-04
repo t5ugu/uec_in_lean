@@ -60,6 +60,13 @@ theorem MultiStepDeriv.inherit {τ : T -> T} (hτ : ∀ {s s'}, s ⟶ s' -> τ s
   | step h _ ih => exact .step (hτ h) ih
 }
 
+theorem MultiStepDeriv.ne_refl {t t' : T} (h : t ⟶* t') (hne : t ≠ t') :
+  ∃ v', t ⟶ v' ∧ v' ⟶* t' := by {
+  cases h with
+  | refl => contradiction
+  | step h_step h_rest => exact ⟨_, h_step, h_rest⟩
+}
+
 end MultiStepDeriv
 
 section Halting
