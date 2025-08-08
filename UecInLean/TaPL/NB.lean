@@ -21,11 +21,7 @@ inductive T : Type
   | iszero (n : T)
 deriving DecidableEq
 
-def ofNat : Nat -> T
-  | 0 => T.zero
-  | n + 1 => T.succ (ofNat n)
-
-instance {n} : OfNat T n := ⟨ofNat n⟩
+instance : Zero T := ⟨.zero⟩
 @[simp]
 theorem zero_eq_zero : 0 = T.zero := rfl
 
@@ -93,19 +89,6 @@ theorem sn_accumulation (n) : s n ⊆ s (n + 1) := by
     }
   }
 
-theorem sn_has_pre_succ {n t} (h : .succ t ∈ s n) : t ∈ s n := by
-  rw [sn_has_succ]; apply sn_accumulation; assumption
-
-
-theorem sn_has_pre_pred {n t} (h : .pred t ∈ s n) : t ∈ s n := by
-  rw [sn_has_pred]; apply sn_accumulation; assumption
-
-theorem sn_has_pre_iszero {n t} (h : .iszero t ∈ s n) : t ∈ s n := by
-  rw [sn_has_iszero]; apply sn_accumulation; assumption
-
-theorem sn_has_pre_if {n c t e} (h : .If c t e ∈ s n) : c ∈ s n ∧ t ∈ s n ∧ e ∈ s n := by
-  rw [sn_has_if]; apply sn_accumulation; assumption
-
 theorem sn_accumulation' {m n} (h : m ≤ n) : s m ⊆ s n := by {
   set t := n - m with ht
   rw [show n = m + t by rw [ht, Nat.add_sub_cancel' h]]
@@ -115,13 +98,6 @@ theorem sn_accumulation' {m n} (h : m ≤ n) : s m ⊆ s n := by {
     rw [← Nat.add_assoc]
     exact subset_trans ih <| sn_accumulation (m + n)
   }
-}
-
-theorem sn_sub_S (n) : s n ⊆ S := by {
-  intro y hy
-  unfold S
-  rw [Set.mem_iUnion]
-  use n
 }
 
 /-- 命題3.2.6 (a) SはTのなすものの一例である -/
@@ -358,6 +334,8 @@ inductive isValue : T -> Prop
   | false : isValue T.false
   | nat {n : T} : isNat n -> isValue n
 
+instance : HasValue T := ⟨isValue⟩
+
 inductive eval : T -> T -> Prop where
   | E_IfTrue {t₂ t₃} : eval (.If .true t₂ t₃) t₂
   | E_IfFalse {t₂ t₃} : eval (.If .false t₂ t₃) t₃
@@ -378,24 +356,46 @@ open eval
 @[simp] theorem isValue_false : isValue T.false := isValue.false
 @[simp] theorem isValue_zero : isValue T.zero := isValue.nat .zero
 @[simp] theorem isValue_of_isNat {n : T} (hn : isNat n) : isValue n := isValue.nat hn
+
 @[simp]
-theorem isValue_not_If {c t e : T} : ¬ isValue (.If c t e) := by {
-  intro h; cases h with | nat hn => cases hn
-}
-theorem isValue_succ {n : T} : isNat n ↔ isValue n.succ := by {
+theorem isNat_iff_isValue_succ {n : T} : isValue n.succ ↔ isNat n := by {
   constructor
-  · intro h; exact isValue.nat h.succ
   · intro h; rcases h with _ | _ | ⟨⟨_⟩⟩; assumption
+  · intro h; exact isValue.nat h.succ
+}
+@[simp]
+theorem not_isValue_If {c t e : T} : ¬ isValue (.If c t e) := by {
+  intro h; rcases h with _ | _ | ⟨⟨⟩⟩
+}
+@[simp]
+theorem not_isValue_succ {n : T} (h' : ¬ isNat n) : ¬ isValue (.succ n) := by {
+  intro h; rcases h with _ | _ | ⟨⟨_⟩⟩
+  contradiction
+}
+@[simp]
+theorem not_isValue_pred {n : T} : ¬ isValue (.pred n) := by {
+  intro h; rcases h with _ | _ | ⟨⟨⟩⟩
+}
+@[simp]
+theorem not_isValue_iszero {n : T} : ¬ isValue (.iszero n) := by {
+  intro h; rcases h with _ | _ | ⟨⟨⟩⟩
 }
 
-theorem isValue_not_pred {n : T} : ¬ isValue (.pred n) := by {
-  intro h; cases h with | nat hn => cases hn
+theorem not_isNat_of_not_isValue {n : T} (h : ¬ isValue n) : ¬ isNat n := by {
+  intro hn
+  apply h
+  exact isValue_of_isNat hn
 }
-theorem isValue_not_iszero {n : T} : ¬ isValue (.iszero n) := by {
-  intro h; cases h with | nat hn => cases hn
+@[simp]
+theorem not_isNat_true : ¬ isNat T.true := by {
+  intro h; rcases h with _ | _ | ⟨⟨_⟩⟩
+}
+@[simp]
+theorem not_isNat_false : ¬ isNat T.false := by {
+  intro h; rcases h with _ | _ | ⟨⟨_⟩⟩
 }
 
-theorem isNormalForm_of_isValue (v : T) (hv : isValue v) : isNormalForm v := by {
+theorem isNormalForm_of_isValue {v : T} (hv : isValue v) : isNormalForm v := by {
   intro _ h
   cases hv with
   | true | false => cases h
@@ -404,10 +404,10 @@ theorem isNormalForm_of_isValue (v : T) (hv : isValue v) : isNormalForm v := by 
     | zero => cases h
     | succ _ hv =>
       cases h with
-      | E_Succ h' => exact isNormalForm_of_isValue _ (isValue_of_isNat hv) _ h'
+      | E_Succ h' => exact isNormalForm_of_isValue (isValue_of_isNat hv) _ h'
 }
 
-theorem isNormalForm_of_isNat {n : T} (hn : isNat n) : isNormalForm n := isNormalForm_of_isValue _ (isValue_of_isNat hn)
+theorem isNormalForm_of_isNat {n : T} (hn : isNat n) : isNormalForm n := isNormalForm_of_isValue (isValue_of_isNat hn)
 
 /-- 演習 3.5.14 -/
 theorem determination {t u u' : T} : t ⟶ u → t ⟶ u' → u = u'
@@ -430,10 +430,12 @@ theorem determination {t u u' : T} : t ⟶ u → t ⟶ u' → u = u'
     exact absurd h (isNormalForm_of_isNat hu' _)
   | .E_Iszero h, .E_Iszero h' => by rw [determination h h']
 
+instance : OneStepDeterminancy T := ⟨determination⟩
+
 instance : Arithmetic T := {
-  isValue, measure := size,
+  measure := size,
   ordering h := by induction h <;> simp [size] <;> linarith
-  determination, isNormalForm_of_isValue
+  isNormalForm_of_isValue
 }
 
 end NB
@@ -469,7 +471,7 @@ def subterm : T -> List T
   | .pred n => subterm n
   | .iszero n => subterm n
   | .If c t e => subterm c ++ subterm t ++ subterm e
-  | .wrong => [.wrong]
+  | .wrong => [.wrong] -- descend_of_nin_wrong のためのハック
 
 inductive isNat : T -> Prop
   | zero : isNat zero
@@ -507,7 +509,20 @@ inductive eval : T -> T -> Prop where
 
 instance : Derivable T := ⟨eval⟩
 
-theorem isNormalForm_of_isValue (v : T) (hv : isValue v) : isNormalForm v := by {
+@[simp]
+theorem not_isValue_wrong : ¬ isValue .wrong := by {
+  intro h
+  rcases h with _ | _ | ⟨⟨_⟩⟩
+}
+
+@[simp]
+theorem isValue_ne_wrong {v} (hv : isValue v) : v ≠ .wrong := by {
+  intro h
+  rw [h] at hv
+  exact not_isValue_wrong hv
+}
+
+theorem isNormalForm_of_isValue {v : T} (hv : isValue v) : isNormalForm v := by {
   intro _ h
   cases hv with
   | true | false => cases h
@@ -516,11 +531,11 @@ theorem isNormalForm_of_isValue (v : T) (hv : isValue v) : isNormalForm v := by 
     | zero => cases h
     | succ _ hv =>
       cases h with
-      | E_Succ h' => exact isNormalForm_of_isValue _ (isValue.nat hv) _ h'
+      | E_Succ h' => exact isNormalForm_of_isValue (isValue.nat hv) _ h'
       | E_Succ_Wrong h => cases hv <;> cases h
 }
 
-theorem isNormalForm_of_isNat {n : T} (hn : isNat n) : isNormalForm n := isNormalForm_of_isValue _ (isValue.nat hn)
+theorem isNormalForm_of_isNat {n : T} (hn : isNat n) : isNormalForm n := isNormalForm_of_isValue (isValue.nat hn)
 
 -- 正直、これで場合が尽くされているかすこし疑問
 theorem determination {t u u' : T} : t ⟶ u → t ⟶ u' → u = u'
@@ -554,10 +569,12 @@ theorem determination {t u u' : T} : t ⟶ u → t ⟶ u' → u = u'
   | .E_Iszero_Wrong _, .E_Iszero_Wrong _ => by rfl
   | .E_Iszero_Wrong .true, .E_Iszero nf => by cases nf
 
-instance : Arithmetic T := {
+instance : OneStepDeterminancy T := ⟨determination⟩
+
+instance : @Arithmetic T NBw.instDerivableT := {
   isValue, measure := size,
   ordering h := by induction h <;> simp [size] <;> linarith
-  determination, isNormalForm_of_isValue
+  isNormalForm_of_isValue
 }
 
 theorem Es_If {t t' t₂ t₃} : t ⟶* t' → (If t t₂ t₃) ⟶* (If t' t₂ t₃) := @MultiStepDeriv.inherit NBw.T inferInstance (fun t => .If t t₂ t₃) .E_If _ _
@@ -567,6 +584,13 @@ theorem Es_Succ {t t'} : t ⟶* t' → (succ t) ⟶* (succ t') := @MultiStepDeri
 theorem Es_Pred {t t'} : t ⟶* t' → (pred t) ⟶* (pred t') := @MultiStepDeriv.inherit NBw.T inferInstance (fun t => .pred t) .E_Pred _ _
 
 theorem Es_Iszero {t t'} : t ⟶* t' → (iszero t) ⟶* (iszero t') := @MultiStepDeriv.inherit NBw.T inferInstance (fun t => .iszero t) .E_Iszero _ _
+
+theorem not_Es_isValue_wrong {t : T} (h : isValue t) : ¬ t ⟶* .wrong := by {
+  intro h'
+  induction h' with
+  | refl => exact not_isValue_wrong h
+  | step h' hs ih => exact isNormalForm_of_isValue h _ h'
+}
 
 def lift : NB.T -> NBw.T
   | .true => NBw.T.true
@@ -664,21 +688,6 @@ theorem casesOn_lift_eval {motive : (t : NB.T) -> (t' : NBw.T) -> (lift t) ⟶ t
   | .iszero .false, .E_Iszero_Wrong .false => exact E_Iszero_Wrong_False
 }
 
-theorem isBadBool_lift_iff {v : NB.T} : NBw.isBadBool (lift v) ↔ NB.isNat v := by {
-  constructor
-  {
-    intro h
-    cases v with
-    | true | false | If | iszero => { rcases h with _ | ⟨_ | _⟩ }
-    | zero => exact .zero
-    | succ | pred => cases h with | nat h => exact isNat_descend h
-  }
-  {
-    intro h
-    exact .nat (isNat_lift h)
-  }
-}
-
 theorem eval_lift {g v : NB.T} (h : g ⟶ v) : lift g ⟶ lift v := by {
   induction h using NB.eval.recOn with
   | E_IfTrue => exact .E_IfTrue
@@ -691,299 +700,6 @@ theorem eval_lift {g v : NB.T} (h : g ⟶ v) : lift g ⟶ lift v := by {
   | E_IszeroZero => exact .E_IszeroZero
   | E_IszeroSucc ih => exact .E_IszeroSucc (isNat_lift ih)
   | E_Iszero _ ih => exact .E_Iszero ih
-}
-
-theorem evals_lift (g v : NB.T) : g ⟶* v → lift g ⟶* lift v := by {
-  intro h
-  induction h with
-  | refl => exact .refl
-  | step h hs ih => exact .step (eval_lift h) ih
-}
-
-/-- 補題 A.3 -/
-theorem eval_unique {g g'} (h : g ⟶ g') : ∀ g'' ≠ lift g', ¬ (lift g) ⟶ g'' := by {
-  intro g'' hne h'
-  exact hne (NBw.determination (eval_lift h) h').symm
-}
-
-/-- 補題 A.4 -/
-theorem deadlock_to_wrong (g : NB.T) : isDeadlock g → lift g ⟶* NBw.T.wrong := by {
-  intro ⟨hnf, hnv⟩
-  induction g with
-  | true | false | zero => simp [HasValue.isValue] at hnv
-  | If g₁ g₂ g₃ ih₁ _ _ => {
-    cases Classical.em (isNormalForm g₁) with
-    | inr h => {
-      rw [isNormalForm_not_iff] at h
-      rcases h with ⟨g₁', h⟩
-      exact absurd (.E_If h) (hnf <| .If g₁' g₂ g₃)
-    }
-    | inl h => {
-      cases g₁ with
-      | true => exact absurd (.E_IfTrue) (hnf _)
-      | false => exact absurd (.E_IfFalse) (hnf _)
-      | If _ _ _ => {
-        -- g₁ ⟶* wrong
-        have := ih₁ h NB.isValue_not_If
-        -- g = if g₁ _ _ ⟶* if wrong _ _ ⟶* wrong
-        exact (NBw.Es_If this).append (MultiStepDeriv.lift <| .E_If_Wrong .wrong)
-      }
-      | zero => exact MultiStepDeriv.lift <| .E_If_Wrong (.nat .zero)
-      | succ g₁₁ => {
-        cases Classical.em (NB.isNat g₁₁) with
-        | inl hg => { -- g₁₁ が数値なら g₁ = succ g₁₁ は badbool
-          have hg : NBw.isBadBool (.succ g₁₁) := .nat (.succ _ (isNat_lift hg))
-          exact MultiStepDeriv.lift (.E_If_Wrong hg)
-        }
-        | inr hg => {
-          have := ih₁ h (by { -- 数値でないなら Value でない
-            intro h
-            cases h with
-            | nat h =>
-              cases h with
-              | succ => contradiction
-          })
-          exact (NBw.Es_If this).append (MultiStepDeriv.lift <| NBw.eval.E_If_Wrong .wrong)
-        }
-      }
-      | pred g₁₁ => { -- 流れは succ と同じ
-        cases Classical.em (NB.isNat g₁₁) with
-        | inl hg => {
-          have hg : NBw.isBadBool (.pred g₁₁) := by {
-            cases hg with
-            | zero => exact absurd (.E_PredZero) (h _)
-            | succ _ hg => exact absurd (.E_PredSucc hg) (h _)
-          }
-          apply MultiStepDeriv.lift (NBw.eval.E_If_Wrong hg)
-        }
-        | inr hg => {
-          have := ih₁ h (by intro h; rcases h with _ | _ | ⟨⟨_⟩⟩)
-          exact (NBw.Es_If this).append (MultiStepDeriv.lift <| NBw.eval.E_If_Wrong .wrong)
-        }
-      }
-      | iszero g₁₁ => {
-        cases Classical.em (NB.isNat g₁₁) with
-        | inl hg => {
-          have hg : NBw.isBadBool (.iszero g₁₁) := by {
-            cases hg with
-            | zero => exact absurd (.E_IszeroZero) (h _)
-            | succ _ hg => exact absurd (.E_IszeroSucc hg) (h _)
-          }
-          exact MultiStepDeriv.lift (NBw.eval.E_If_Wrong hg)
-        }
-        | inr hg => {
-          have := ih₁ h (by intro h; rcases h with _ | _ | ⟨⟨h⟩⟩)
-          exact (NBw.Es_If this).append (MultiStepDeriv.lift <| NBw.eval.E_If_Wrong .wrong)
-        }
-      }
-    }
-  }
-  | succ g₁ ih => {
-    have : (g₁ = .true ∨ g₁ = .false) ∨ isDeadlock g₁ := by {
-      simp only [HasValue.isValue, ← NB.isValue_succ] at hnv
-      have hnf : isNormalForm g₁ := isNormalForm_of_pre NB.eval.E_Succ hnf
-      cases Classical.em (NB.isValue g₁) with
-      | inl h => {
-        cases h with
-        | true => left; left; rfl
-        | false => left; right; rfl
-        | nat h => contradiction
-      }
-      | inr h => right; exact ⟨hnf, h⟩
-    }
-    rcases this with ⟨h | h⟩ | ⟨hnf, hnv⟩
-    {
-      rw [h]
-      exact MultiStepDeriv.lift <| NBw.eval.E_Succ_Wrong .true
-    }
-    {
-      rw [h]
-      exact MultiStepDeriv.lift <| NBw.eval.E_Succ_Wrong .false
-    }
-    {
-      have := ih hnf hnv
-      exact (NBw.Es_Succ this).append (MultiStepDeriv.lift <| NBw.eval.E_Succ_Wrong .wrong)
-    }
-  }
-  | pred g₁ ih => {
-    cases Classical.em (NB.isValue g₁) with
-    | inl hg => {
-      cases hg with
-      | true => exact MultiStepDeriv.lift <| .E_Pred_Wrong .true
-      | false => exact MultiStepDeriv.lift <| .E_Pred_Wrong .false
-      | nat hg => {
-        cases hg with
-        | zero => exact absurd (.E_PredZero) (hnf _)
-        | succ _ hg => exact absurd (.E_PredSucc hg) (hnf _)
-      }
-    }
-    | inr hg => {
-      exact (NBw.Es_Pred (ih (isNormalForm_of_pre NB.eval.E_Pred hnf) hg)).append (MultiStepDeriv.lift <| .E_Pred_Wrong .wrong)
-    }
-  }
-  | iszero g₁ ih => {
-    cases Classical.em (NB.isValue g₁) with
-    | inl hg => {
-      cases hg with
-      | true => exact MultiStepDeriv.lift <| .E_Iszero_Wrong .true
-      | false => exact MultiStepDeriv.lift <| .E_Iszero_Wrong .false
-      | nat hg => {
-        cases hg with
-        | zero => exact absurd (.E_IszeroZero) (hnf _)
-        | succ _ hg => exact absurd (.E_IszeroSucc hg) (hnf _)
-      }
-    }
-    | inr hg => {
-      exact (NBw.Es_Iszero (ih (isNormalForm_of_pre NB.eval.E_Iszero hnf) hg)).append (MultiStepDeriv.lift <| .E_Iszero_Wrong .wrong)
-    }
-  }
-}
-
-theorem deadlock_succ {t : NB.T} (h : isDeadlock t) : isDeadlock t.succ := ⟨
-  by {
-    intro t' ht'
-    cases ht' using NB.eval.casesOn with
-    | E_Succ ht' => {
-      exact h.left _ ht'
-    }
-  }, by {
-    intro hnv
-    rcases hnv with _ | _ | ⟨⟨_⟩⟩
-    exact h.right (NB.isValue_of_isNat (by assumption))
-  }
-⟩
-
-theorem deadlock_pred {t : NB.T} (h : isDeadlock t) : isDeadlock t.pred := ⟨
-  by {
-    intro t' ht'
-    cases ht' using NB.eval.casesOn with
-    | E_PredZero => exact h.right (.nat .zero)
-    | E_PredSucc ht' => exact h.right (NB.isValue_of_isNat ht'.succ)
-    | E_Pred ht' => exact h.left _ ht'
-  }, by {
-    intro hnv
-    rcases hnv with _ | _ | ⟨⟨_⟩⟩
-  }
-⟩
-
-theorem deadlock_If {c : NB.T} (t e) (h : isDeadlock c) : isDeadlock (NB.T.If c t e) := ⟨
-  by {
-    intro t' ht'
-    cases ht' using NB.eval.casesOn with
-    | E_IfTrue => exact h.right .true
-    | E_IfFalse => exact h.right .false
-    | E_If ht' => exact h.left _ ht'
-  }, by {
-    intro hnv
-    rcases hnv with _ | _ | ⟨⟨_⟩⟩
-  }
-⟩
-
-theorem deadlock_iszero {t : NB.T} (h : isDeadlock t) : isDeadlock t.iszero := ⟨
-  by {
-    intro t' ht'
-    cases ht' using NB.eval.casesOn with
-    | E_IszeroZero => exact h.right (.nat .zero)
-    | E_IszeroSucc ht' => exact h.right (NB.isValue_of_isNat ht'.succ)
-    | E_Iszero ht' => exact h.left _ ht'
-  }, by {
-    intro hnv
-    rcases hnv with _ | _ | ⟨⟨_⟩⟩
-  }
-⟩
-
-theorem deadlock_If_nat {bb : NB.T} (t₂ t₃) (h : NB.isNat bb) : isDeadlock (NB.T.If bb t₂ t₃) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_If_Wrong <| .nat (isNat_lift h)))
-, by intro hnv; exact NB.isValue_not_If hnv
-⟩
-
-theorem deadlock_succ_true : isDeadlock (NB.T.succ .true) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Succ_Wrong .true))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem deadlock_succ_false : isDeadlock (NB.T.succ .false) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Succ_Wrong .false))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem deadlock_pred_true : isDeadlock (NB.T.pred .true) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Pred_Wrong .true))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem deadlock_pred_false : isDeadlock (NB.T.pred .false) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Pred_Wrong .false))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem deadlock_iszero_true : isDeadlock (NB.T.iszero .true) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Iszero_Wrong .true))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem deadlock_iszero_false : isDeadlock (NB.T.iszero .false) := ⟨
-  by intro _ ht'; exact lift_is_not_wrong (NBw.determination (eval_lift ht') (.E_Iszero_Wrong .false))
-, by intro hnv; rcases hnv with _ | _ | ⟨_ | ⟨_, ⟨⟩⟩⟩
-⟩
-
-theorem subterm_lift_nin_wrong {t : NB.T} : NBw.T.wrong ∉ NBw.subterm (lift t) := by {
-  induction t with
-  | true | false | zero => simp [lift, NBw.subterm]
-  | succ _ ih | pred _ ih | iszero _ ih => {
-    rw [lift, NBw.subterm]
-    exact ih
-  }
-  | If _ _ _ ihc iht ihe => {
-    rw [lift, NBw.subterm]
-    simp only [List.mem_append, not_or, and_assoc]
-    exact ⟨ihc, iht, ihe⟩
-  }
-}
-
-theorem deadlock_is_wrong (g : NB.T) : (∃ g', g ⟶* g' ∧ isDeadlock g') -> (g ⟶* NBw.T.wrong) := by {
-  intro ⟨g', h, hg'⟩
-  induction h with
-  | refl => {
-    exact deadlock_to_wrong g' hg'
-  }
-  | step h _ ih => {
-    exact (MultiStepDeriv.lift (eval_lift h)).append ih
-  }
-}
-
-/-- 補題 A.5 -/
-theorem subterm_wrong_deadlock {g t} (h : lift g ⟶ t) (ht : NBw.T.wrong ∈ NBw.subterm t) : isDeadlock g := by {
-  cases h using casesOn_lift_eval with
-  | E_IfTrue => exact absurd ht subterm_lift_nin_wrong
-  | E_IfFalse => exact absurd ht subterm_lift_nin_wrong
-  | E_If h => {
-    simp only [NBw.subterm, List.mem_append, subterm_lift_nin_wrong, or_false] at ht
-    exact deadlock_If _ _ <| subterm_wrong_deadlock h ht
-  }
-  | E_If_Wrong h => exact deadlock_If_nat _ _ h
-  | E_Succ h => {
-    rw [NBw.subterm] at ht
-    exact deadlock_succ <| subterm_wrong_deadlock h ht
-  }
-  | E_Succ_Wrong_True => exact deadlock_succ_true
-  | E_Succ_Wrong_False => exact deadlock_succ_false
-  | E_PredZero => cases ht
-  | E_PredSucc h => exact absurd ht subterm_lift_nin_wrong
-  | E_Pred h => {
-    rw [NBw.subterm] at ht
-    exact deadlock_pred <| subterm_wrong_deadlock h ht
-  }
-  | E_Pred_Wrong_True => exact deadlock_pred_true
-  | E_Pred_Wrong_False => exact deadlock_pred_false
-  | E_IszeroZero => cases ht
-  | E_IszeroSucc => cases ht
-  | E_Iszero h => {
-    rw [NBw.subterm] at ht
-    exact deadlock_iszero <| subterm_wrong_deadlock h ht
-  }
-  | E_Iszero_Wrong_True => exact deadlock_iszero_true
-  | E_Iszero_Wrong_False => exact deadlock_iszero_false
 }
 
 theorem descend_of_nin_wrong {t : NBw.T} (h : NBw.T.wrong ∉ NBw.subterm t) : ∃ g, t = lift g := by {
@@ -1014,10 +730,24 @@ theorem descend_of_nin_wrong {t : NBw.T} (h : NBw.T.wrong ∉ NBw.subterm t) : �
   | wrong => rw [NBw.subterm] at h; exact absurd (List.mem_singleton_self _) h
 }
 
+theorem wrong_nin_subterm_lift {t : NB.T} : NBw.T.wrong ∉ NBw.subterm (lift t) := by {
+  induction t with
+  | true | false | zero => simp [lift, NBw.subterm]
+  | succ _ ih | pred _ ih | iszero _ ih => {
+    rw [lift, NBw.subterm]
+    exact ih
+  }
+  | If _ _ _ ihc iht ihe => {
+    rw [lift, NBw.subterm]
+    simp only [List.mem_append, not_or, and_assoc]
+    exact ⟨ihc, iht, ihe⟩
+  }
+}
+
 theorem descend_of_subterm_lift (t g) (h : NBw.subterm t ⊆ NBw.subterm (lift g)) : ∃ g', t = lift g' := by {
   apply descend_of_nin_wrong
   intro h'
-  exact absurd (h h') subterm_lift_nin_wrong
+  exact absurd (h h') wrong_nin_subterm_lift
 }
 
 theorem evals_wrong_is_step {g : NB.T} (h : lift g ⟶* NBw.T.wrong) : ∃ v', lift g ⟶ v' ∧ v' ⟶* NBw.T.wrong := by {
@@ -1030,25 +760,25 @@ theorem eval_descend {g g'} : lift g ⟶ lift g' → g ⟶ g' := by {
   intro h
   induction h generalizing g g' with
   | E_IfTrue => {
-    rename_i t₂ t₃
-    have ⟨g, hg⟩ := descend_of_subterm_lift t₃ g (by simp [hv, NBw.subterm])
-    rw [← lift, ← hv', hg, ← lift] at hv
+    rename_i _ t₃
+    rcases descend_of_subterm_lift t₃ g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift, ← hv', ← lift] at hv
     rw [lift_injective hv]
     exact .E_IfTrue
   }
   | E_IfFalse => {
-    rename_i t₂ t₃
-    have ⟨g, hg⟩ := descend_of_subterm_lift t₂ g (by simp [hv, NBw.subterm])
-    rw [← lift, ← hv', hg, ← lift] at hv
+    rename_i t₂ _
+    rcases descend_of_subterm_lift t₂ g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift, ← hv', ← lift] at hv
     rw [lift_injective hv]
     exact .E_IfFalse
   }
   | E_If h ih => {
     rename_i c c' t e
-    rcases descend_of_subterm_lift c g (by simp [hv, NBw.subterm]) with ⟨c₁, rfl⟩
-    rcases descend_of_subterm_lift c' g' (by simp [hv', NBw.subterm]) with ⟨c'₁, rfl⟩
-    rcases descend_of_subterm_lift t g (by simp [hv, NBw.subterm]) with ⟨t₁, rfl⟩
-    rcases descend_of_subterm_lift e g (by simp [hv, NBw.subterm]) with ⟨e₁, rfl⟩
+    rcases descend_of_subterm_lift c g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift c' g' (by simp [hv', NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift t g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift e g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
     rw [← lift] at hv hv'
     rw [lift_injective hv, lift_injective hv']
     exact .E_If (ih rfl rfl)
@@ -1056,11 +786,11 @@ theorem eval_descend {g g'} : lift g ⟶ lift g' → g ⟶ g' := by {
   | E_If_Wrong h => exact absurd hv' lift_is_not_wrong
   | E_Succ h ih => {
     rename_i n n'
-    have ⟨g, hg⟩ := descend_of_subterm_lift n g (by simp [hv, NBw.subterm])
-    have ⟨g', hg'⟩ := descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm])
-    rw [hg, ← lift] at hv; rw [lift_injective hv]
-    rw [hg', ← lift] at hv'; rw [lift_injective hv']
-    exact .E_Succ (ih hg.symm hg'.symm)
+    rcases descend_of_subterm_lift n g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift] at hv hv'
+    rw [lift_injective hv, lift_injective hv']
+    exact .E_Succ (ih rfl rfl)
   }
   | E_Succ_Wrong => exact absurd hv' lift_is_not_wrong
   | E_PredZero => {
@@ -1070,19 +800,18 @@ theorem eval_descend {g g'} : lift g ⟶ lift g' → g ⟶ g' := by {
   }
   | E_PredSucc h => {
     rename_i n
-    have ⟨g, hg⟩ := descend_of_subterm_lift n g (by simp [hv, NBw.subterm])
-    rw [hg, ← lift, ← lift] at hv;
-    rw [hg] at hv' h
+    rcases descend_of_subterm_lift n g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift, ← lift] at hv
     rw [lift_injective hv, lift_injective hv']
     exact .E_PredSucc (isNat_descend h)
   }
   | E_Pred h ih => {
     rename_i n n'
-    have ⟨g, hg⟩ := descend_of_subterm_lift n g (by simp [hv, NBw.subterm])
-    have ⟨g', hg'⟩ := descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm])
-    rw [hg, ← lift] at hv; rw [lift_injective hv]
-    rw [hg', ← lift] at hv'; rw [lift_injective hv']
-    exact .E_Pred (ih hg.symm hg'.symm)
+    rcases descend_of_subterm_lift n g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift] at hv hv'
+    rw [lift_injective hv, lift_injective hv']
+    exact .E_Pred (ih rfl rfl)
   }
   | E_Pred_Wrong => exact absurd hv' lift_is_not_wrong
   | E_IszeroZero => {
@@ -1092,22 +821,281 @@ theorem eval_descend {g g'} : lift g ⟶ lift g' → g ⟶ g' := by {
   }
   | E_IszeroSucc h => {
     rename_i n
-    have ⟨g, hg⟩ := descend_of_subterm_lift n g (by simp [hv, NBw.subterm])
-    rw [hg, ← lift, ← lift] at hv
-    rw [hg] at h
+    rcases descend_of_subterm_lift n g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift, ← lift] at hv
     rw [← lift] at hv'
     rw [lift_injective hv, lift_injective hv']
     exact .E_IszeroSucc (isNat_descend h)
   }
   | E_Iszero h ih => {
     rename_i n n'
-    have ⟨g, hg⟩ := descend_of_subterm_lift n g (by simp [hv, NBw.subterm])
-    have ⟨g', hg'⟩ := descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm])
-    rw [hg, ← lift] at hv; rw [lift_injective hv]
-    rw [hg', ← lift] at hv'; rw [lift_injective hv']
-    exact .E_Iszero (ih hg.symm hg'.symm)
+    rcases descend_of_subterm_lift n g (by simp [hv, NBw.subterm]) with ⟨_, rfl⟩
+    rcases descend_of_subterm_lift n' g' (by simp [hv', NBw.subterm]) with ⟨_, rfl⟩
+    rw [← lift] at hv hv'
+    rw [lift_injective hv, lift_injective hv']
+    exact .E_Iszero (ih rfl rfl)
   }
   | E_Iszero_Wrong => exact absurd hv' lift_is_not_wrong
+}
+
+theorem evals_lift (g v : NB.T) : g ⟶* v → lift g ⟶* lift v := by {
+  intro h
+  induction h with
+  | refl => exact .refl
+  | step h hs ih => exact .step (eval_lift h) ih
+}
+
+/-- 補題 A.3 -/
+theorem eval_unique {g g'} (h : g ⟶ g') : ∀ g'' ≠ lift g', ¬ (lift g) ⟶ g'' := by {
+  intro g'' hne h'
+  exact hne (NBw.determination (eval_lift h) h').symm
+}
+
+/-- 補題 A.4 -/
+theorem evals_lift_wrong_of_isDeadlock (g : NB.T) : isDeadlock g → lift g ⟶* NBw.T.wrong := by {
+  intro ⟨hnf, hnv⟩
+  simp only [HasValue.isValue] at hnv
+  induction g with
+  | true | false | zero => simp at hnv
+  | If g₁ g₂ g₃ ih₁ _ _ => {
+    cases Classical.em (isNormalForm g₁) with
+    | inr h => { -- cond 節が正規形でないなら E_If が構成できるが、全体で正規形という仮定に矛盾する
+      rw [isNormalForm_not_iff] at h
+      rcases h with ⟨g₁', h⟩
+      exact absurd (.E_If h) (hnf <| .If g₁' g₂ g₃)
+    }
+    | inl h => {
+      cases g₁ with -- cond 節の中身を場合分け
+      | true => exact absurd (.E_IfTrue) (hnf _)
+      | false => exact absurd (.E_IfFalse) (hnf _)
+      | If _ _ _ => {
+        -- g₁ ⟶* wrong
+        have := ih₁ h NB.not_isValue_If
+        -- g = if g₁ _ _ ⟶* if wrong _ _ ⟶* wrong
+        exact (Es_If this).push (.E_If_Wrong .wrong)
+      }
+      | zero => exact .lift (.E_If_Wrong (.nat .zero))
+      | succ g₁₁ => {
+        cases Classical.em (NB.isNat g₁₁) with
+        | inl hg => { -- g₁₁ が数値なら g₁ = succ g₁₁ は badbool
+          have hg : NBw.isBadBool (.succ g₁₁) := .nat (.succ _ (isNat_lift hg))
+          exact .lift (.E_If_Wrong hg)
+        }
+        | inr hg => {
+          rw [← NB.isNat_iff_isValue_succ] at hg
+          exact (Es_If (ih₁ h hg)).push (.E_If_Wrong .wrong)
+        }
+      }
+      | pred g₁₁ => { -- 流れは succ と同じ
+        cases Classical.em (NB.isNat g₁₁) with
+        | inl hg => {
+          have hg : NBw.isBadBool (.pred g₁₁) := by {
+            cases hg with
+            | zero => exact absurd (.E_PredZero) (h _)
+            | succ _ hg => exact absurd (.E_PredSucc hg) (h _)
+          }
+          exact .lift (.E_If_Wrong hg)
+        }
+        | inr hg => {
+          rw [← NB.isNat_iff_isValue_succ] at hg
+          exact (Es_If (ih₁ h NB.not_isValue_pred)).push (.E_If_Wrong .wrong)
+        }
+      }
+      | iszero g₁₁ => {
+        cases Classical.em (NB.isNat g₁₁) with
+        | inl hg => {
+          have hg : NBw.isBadBool (.iszero g₁₁) := by {
+            cases hg with
+            | zero => exact absurd (.E_IszeroZero) (h _)
+            | succ _ hg => exact absurd (.E_IszeroSucc hg) (h _)
+          }
+          exact .lift (.E_If_Wrong hg)
+        }
+        | inr hg => {
+          exact (Es_If (ih₁ h NB.not_isValue_iszero)).push (.E_If_Wrong .wrong)
+        }
+      }
+    }
+  }
+  | succ g₁ ih => {
+    have g₁_badnat : (g₁ = .true ∨ g₁ = .false) ∨ isDeadlock g₁ := by {
+      cases Classical.em (NB.isValue g₁) with
+      | inl h => {
+        cases h with
+        | true => left; left; rfl
+        | false => left; right; rfl
+        | nat h => {
+          rw [NB.isNat_iff_isValue_succ] at hnv
+          contradiction
+        }
+      }
+      | inr h => right; exact ⟨isNormalForm_of_pre NB.eval.E_Succ hnf, h⟩
+    }
+    rcases g₁_badnat with ⟨rfl | rfl⟩ | ⟨hnf, hnv⟩
+    exact .lift (.E_Succ_Wrong .true)
+    exact .lift (.E_Succ_Wrong .false)
+    exact (Es_Succ (ih hnf hnv)).push (.E_Succ_Wrong .wrong)
+  }
+  | pred g₁ ih => {
+    cases Classical.em (NB.isValue g₁) with
+    | inl hg => {
+      cases hg with
+      | true => exact .lift (.E_Pred_Wrong .true)
+      | false => exact .lift (.E_Pred_Wrong .false)
+      | nat hg => {
+        cases hg with
+        | zero => exact absurd (.E_PredZero) (hnf _)
+        | succ _ hg => exact absurd (.E_PredSucc hg) (hnf _)
+      }
+    }
+    | inr hg => {
+      exact (Es_Pred (ih (isNormalForm_of_pre NB.eval.E_Pred hnf) hg)).push (.E_Pred_Wrong .wrong)
+    }
+  }
+  | iszero g₁ ih => {
+    cases Classical.em (NB.isValue g₁) with
+    | inl hg => {
+      cases hg with
+      | true => exact .lift (.E_Iszero_Wrong .true)
+      | false => exact .lift (.E_Iszero_Wrong .false)
+      | nat hg => {
+        cases hg with
+        | zero => exact absurd (.E_IszeroZero) (hnf _)
+        | succ _ hg => exact absurd (.E_IszeroSucc hg) (hnf _)
+      }
+    }
+    | inr hg => {
+      exact (Es_Iszero (ih (isNormalForm_of_pre NB.eval.E_Iszero hnf) hg)).push (.E_Iszero_Wrong .wrong)
+    }
+  }
+}
+
+theorem isNormalForm_of_eval_lift_wrong {g} (h : lift g ⟶ NBw.T.wrong) : isNormalForm g := by {
+  intro _ h'
+  exact lift_is_not_wrong (NBw.determination (eval_lift h') h)
+}
+
+theorem isDeadlock_succ {t : NB.T} (h : isDeadlock t) : isDeadlock t.succ := ⟨
+  by {
+    intro t' ht'
+    cases ht' using NB.eval.casesOn with
+    | E_Succ ht' => {
+      exact h.left _ ht'
+    }
+  }, NB.not_isValue_succ (NB.not_isNat_of_not_isValue h.right)
+⟩
+
+theorem isDeadlock_pred {t : NB.T} (h : isDeadlock t) : isDeadlock t.pred := ⟨
+  by {
+    intro t' ht'
+    cases ht' using NB.eval.casesOn with
+    | E_PredZero => exact h.right NB.isValue_zero
+    | E_PredSucc ht' => exact h.right (NB.isValue_of_isNat ht'.succ)
+    | E_Pred ht' => exact h.left _ ht'
+  }, NB.not_isValue_pred
+⟩
+
+theorem isDeadlock_If {c : NB.T} (t e) (h : isDeadlock c) : isDeadlock (NB.T.If c t e) := ⟨
+  by {
+    intro t' ht'
+    cases ht' using NB.eval.casesOn with
+    | E_IfTrue => exact h.right .true
+    | E_IfFalse => exact h.right .false
+    | E_If ht' => exact h.left _ ht'
+  }, NB.not_isValue_If
+⟩
+
+theorem isDeadlock_iszero {t : NB.T} (h : isDeadlock t) : isDeadlock t.iszero := ⟨
+  by {
+    intro t' ht'
+    cases ht' using NB.eval.casesOn with
+    | E_IszeroZero => exact h.right NB.isValue_zero
+    | E_IszeroSucc ht' => exact h.right (NB.isValue_of_isNat ht'.succ)
+    | E_Iszero ht' => exact h.left _ ht'
+  }, NB.not_isValue_iszero
+⟩
+
+theorem isDeadlock_If_nat {bb : NB.T} (t₂ t₃) (h : NB.isNat bb) : isDeadlock (NB.T.If bb t₂ t₃) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_If_Wrong <| .nat (isNat_lift h))
+, NB.not_isValue_If
+⟩
+
+theorem isDeadlock_succ_true : isDeadlock (NB.T.succ .true) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Succ_Wrong .true)
+, NB.not_isValue_succ NB.not_isNat_true
+⟩
+
+theorem isDeadlock_succ_false : isDeadlock (NB.T.succ .false) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Succ_Wrong .false)
+, NB.not_isValue_succ NB.not_isNat_false
+⟩
+
+theorem isDeadlock_pred_true : isDeadlock (NB.T.pred .true) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Pred_Wrong .true)
+, NB.not_isValue_pred
+⟩
+
+theorem isDeadlock_pred_false : isDeadlock (NB.T.pred .false) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Pred_Wrong .false)
+, NB.not_isValue_pred
+⟩
+
+theorem isDeadlock_iszero_true : isDeadlock (NB.T.iszero .true) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Iszero_Wrong .true)
+, NB.not_isValue_iszero
+⟩
+
+theorem isDeadlock_iszero_false : isDeadlock (NB.T.iszero .false) := ⟨
+  isNormalForm_of_eval_lift_wrong (.E_Iszero_Wrong .false)
+, NB.not_isValue_iszero
+⟩
+
+theorem evals_lift_wrong_of_to_isDeadlock (g : NB.T) : (∃ g', g ⟶* g' ∧ isDeadlock g') -> (g ⟶* NBw.T.wrong) := by {
+  intro ⟨g', h, hg'⟩
+  induction h with
+  | refl => exact evals_lift_wrong_of_isDeadlock g' hg'
+  | step h _ ih => exact .step (eval_lift h) ih
+}
+
+/-- 補題 A.5 -/
+theorem isDeadlock_of_to_mem_wrong {g t} (h : lift g ⟶ t) (ht : NBw.T.wrong ∈ NBw.subterm t) : isDeadlock g := by {
+  cases h using casesOn_lift_eval with
+  | E_IfTrue => exact absurd ht wrong_nin_subterm_lift
+  | E_IfFalse => exact absurd ht wrong_nin_subterm_lift
+  | E_If h => {
+    simp only [NBw.subterm, List.mem_append, wrong_nin_subterm_lift, or_false] at ht
+    exact isDeadlock_If _ _ <| isDeadlock_of_to_mem_wrong h ht
+  }
+  | E_If_Wrong h => exact isDeadlock_If_nat _ _ h
+  | E_Succ h => {
+    rw [NBw.subterm] at ht
+    exact isDeadlock_succ <| isDeadlock_of_to_mem_wrong h ht
+  }
+  | E_Succ_Wrong_True => exact isDeadlock_succ_true
+  | E_Succ_Wrong_False => exact isDeadlock_succ_false
+  | E_PredZero => cases ht
+  | E_PredSucc h => exact absurd ht wrong_nin_subterm_lift
+  | E_Pred h => {
+    rw [NBw.subterm] at ht
+    exact isDeadlock_pred <| isDeadlock_of_to_mem_wrong h ht
+  }
+  | E_Pred_Wrong_True => exact isDeadlock_pred_true
+  | E_Pred_Wrong_False => exact isDeadlock_pred_false
+  | E_IszeroZero => cases ht
+  | E_IszeroSucc => cases ht
+  | E_Iszero h => {
+    rw [NBw.subterm] at ht
+    exact isDeadlock_iszero <| isDeadlock_of_to_mem_wrong h ht
+  }
+  | E_Iszero_Wrong_True => exact isDeadlock_iszero_true
+  | E_Iszero_Wrong_False => exact isDeadlock_iszero_false
+}
+
+theorem not_evals_isValue_wrong {v} (hv : isValue v) : ¬ v ⟶* wrong := by {
+  intro h
+  cases h with
+  | refl => exact not_isValue_wrong hv
+  | step h => exact NBw.isNormalForm_of_isValue hv _ h
 }
 
 theorem wrong_is_deadlock {g : NB.T} (h : lift g ⟶* NBw.T.wrong) : ∃ g', g ⟶* g' ∧ isDeadlock g' := by {
@@ -1116,7 +1104,6 @@ theorem wrong_is_deadlock {g : NB.T} (h : lift g ⟶* NBw.T.wrong) : ∃ g', g �
   induction h generalizing g with
   | refl => exact absurd hv lift_is_not_wrong
   | step h hs ih => {
-    rename_i v' v
     rw [← hv] at h
     cases h with
     | E_IfTrue => {
@@ -1130,45 +1117,29 @@ theorem wrong_is_deadlock {g : NB.T} (h : lift g ⟶* NBw.T.wrong) : ∃ g', g �
     | E_If h => {
       rename_i c _ _
       rcases Classical.em (.wrong ∈ NBw.subterm c) with hc | hc
+      exact ⟨_, .refl, isDeadlock_If _ _ (isDeadlock_of_to_mem_wrong h hc)⟩
       {
-        have := subterm_wrong_deadlock h hc
-        exact ⟨_, .refl, deadlock_If _ _ this⟩
-      }
-      {
-        have ⟨g, hg⟩ := descend_of_nin_wrong hc
-        rw [hg, ← lift] at ih
-        rw [hg] at h
+        rcases descend_of_nin_wrong hc with ⟨_, rfl⟩
+        rw [← lift] at ih
         have ⟨g', hg', hdl⟩ := ih rfl
         exact ⟨g', .step (.E_If <| eval_descend h) hg', hdl⟩
       }
     }
-    | E_If_Wrong h => {
-      exact ⟨_, .refl, deadlock_If_nat _ _ h⟩
-    }
+    | E_If_Wrong h => exact ⟨_, .refl, isDeadlock_If_nat _ _ h⟩
     | E_Succ h => {
       rename_i n
       rcases Classical.em (.wrong ∈ NBw.subterm n) with hn | hn
+      exact ⟨_, .refl, isDeadlock_succ (isDeadlock_of_to_mem_wrong h hn)⟩
       {
-        have := subterm_wrong_deadlock h hn
-        exact ⟨_, .refl, deadlock_succ this⟩
-      }
-      {
-        have ⟨g, hg⟩ := descend_of_nin_wrong hn
-        rw [hg, ← lift] at ih
-        rw [hg] at h
+        rcases descend_of_nin_wrong hn with ⟨_, rfl⟩
+        rw [← lift] at ih
         have ⟨g', hg', hdl⟩ := ih rfl
         exact ⟨g', .step (.E_Succ <| eval_descend h) hg', hdl⟩
       }
     }
-    | E_Succ_Wrong_True => {
-      exact ⟨_, .refl, deadlock_succ_true⟩
-    }
-    | E_Succ_Wrong_False => {
-      exact ⟨_, .refl, deadlock_succ_false⟩
-    }
-    | E_PredZero => {
-      cases hs with | step h => cases h using NBw.eval.casesOn
-    }
+    | E_Succ_Wrong_True => exact ⟨_, .refl, isDeadlock_succ_true⟩
+    | E_Succ_Wrong_False => exact ⟨_, .refl, isDeadlock_succ_false⟩
+    | E_PredZero => exact absurd hs (not_Es_isValue_wrong (.nat .zero))
     | E_PredSucc h => {
       have ⟨t', ht', hdl⟩ := ih rfl
       exact ⟨t', .step (.E_PredSucc h) ht', hdl⟩
@@ -1176,51 +1147,31 @@ theorem wrong_is_deadlock {g : NB.T} (h : lift g ⟶* NBw.T.wrong) : ∃ g', g �
     | E_Pred h => {
       rename_i n
       rcases Classical.em (.wrong ∈ NBw.subterm n) with hn | hn
+      exact ⟨_, .refl, isDeadlock_pred (isDeadlock_of_to_mem_wrong h hn)⟩
       {
-        have := subterm_wrong_deadlock h hn
-        exact ⟨_, .refl, deadlock_pred this⟩
-      }
-      {
-        have ⟨g, hg⟩ := descend_of_nin_wrong hn
-        rw [hg, ← lift] at ih
-        rw [hg] at h
+        rcases descend_of_nin_wrong hn with ⟨_, rfl⟩
+        rw [← lift] at ih
         have ⟨g', hg', hdl⟩ := ih rfl
         exact ⟨g', .step (.E_Pred <| eval_descend h) hg', hdl⟩
       }
     }
-    | E_Pred_Wrong_True => {
-      exact ⟨_, .refl, deadlock_pred_true⟩
-    }
-    | E_Pred_Wrong_False => {
-      exact ⟨_, .refl, deadlock_pred_false⟩
-    }
-    | E_IszeroZero => {
-      cases hs with | step h => cases h using NBw.eval.casesOn
-    }
-    | E_IszeroSucc h => {
-      cases hs with | step h => cases h using NBw.eval.casesOn
-    }
+    | E_Pred_Wrong_True => exact ⟨_, .refl, isDeadlock_pred_true⟩
+    | E_Pred_Wrong_False => exact ⟨_, .refl, isDeadlock_pred_false⟩
+    | E_IszeroZero => exact absurd hs (not_Es_isValue_wrong .true)
+    | E_IszeroSucc h => exact absurd hs (not_Es_isValue_wrong .false)
     | E_Iszero h => {
       rename_i n
       rcases Classical.em (.wrong ∈ NBw.subterm n) with hn | hn
+      exact ⟨_, .refl, isDeadlock_iszero (isDeadlock_of_to_mem_wrong h hn)⟩
       {
-        have := subterm_wrong_deadlock h hn
-        exact ⟨_, .refl, deadlock_iszero this⟩
-      }
-      {
-        have ⟨g, hg⟩ := descend_of_nin_wrong hn
-        rw [hg, ← lift] at ih
-        rw [hg] at h
+        rcases descend_of_nin_wrong hn with ⟨_, rfl⟩
+        rw [← lift] at ih
         have ⟨g', hg', hdl⟩ := ih rfl
         exact ⟨g', .step (.E_Iszero <| eval_descend h) hg', hdl⟩
       }
     }
-    | E_Iszero_Wrong_True => {
-      exact ⟨_, .refl, deadlock_iszero_true⟩
-    }
-    | E_Iszero_Wrong_False => {
-      exact ⟨_, .refl, deadlock_iszero_false⟩
-    }
+    | E_Iszero_Wrong_True => exact ⟨_, .refl, isDeadlock_iszero_true⟩
+    | E_Iszero_Wrong_False => exact ⟨_, .refl, isDeadlock_iszero_false⟩
   }
 }
 
@@ -1253,28 +1204,27 @@ theorem Es_Pred {t₁ t₁'} : t₁ ⟶* t₁' -> pred t₁ ⟶* pred t₁' := @
 /-- 補題 A.6 -/
 theorem Es_Iszero {t₁ t₁'} : t₁ ⟶* t₁' -> iszero t₁ ⟶* iszero t₁' := @inherit NB.T inferInstance .iszero .E_Iszero t₁ t₁'
 
-theorem isNat_of_evals_nat {t t' : T} (ht : isNat t) (h : t ⟶* t') : isNat t' := by {
-  cases h using MultiStepDeriv.casesOn with
-  | refl => exact ht
-  | step h _ => exact absurd h (NB.isNormalForm_of_isNat ht _)
+theorem isNat_of_isNat {t t' : T} (ht : isNat t) (h : t ⇓ t') : isNat t' := by {
+  cases ht with
+  | zero => cases h; exact .zero
+  | succ => {
+    cases h with
+    | B_Value h => cases h with | nat h => exact h
+    | B_Succ h => exact h.succ
+  }
 }
 
 /-- 命題 A.7 -/
 theorem evals_from_big {t v : T} (h : t ⇓ v) : t ⟶* v := by {
   induction h with
   | B_Value hv => exact .refl
-  | B_IfTrue hv _ _ ih₁ ih₂ =>
-    exact (Es_If ih₁).append <| (MultiStepDeriv.lift NB.eval.E_IfTrue).append ih₂
-  | B_IfFalse hv _ _ ih₁ ih₂ =>
-    exact (Es_If ih₁).append <| (MultiStepDeriv.lift NB.eval.E_IfFalse).append ih₂
+  | B_IfTrue hv _ _ ih₁ ih₂ => exact (Es_If ih₁).append <| .step .E_IfTrue ih₂
+  | B_IfFalse hv _ _ ih₁ ih₂ => exact (Es_If ih₁).append <| .step .E_IfFalse ih₂
   | B_Succ hvp _ ih => exact Es_Succ ih
-  | B_PredZero _ ih => exact (Es_Pred ih).append <| (MultiStepDeriv.lift .E_PredZero)
-  | B_PredSucc hvn _ ih =>
-    exact (Es_Pred ih).append <| (MultiStepDeriv.lift <| NB.eval.E_PredSucc hvn)
-  | B_IszeroZero _ ih =>
-    exact (Es_Iszero ih).append <| (MultiStepDeriv.lift NB.eval.E_IszeroZero)
-  | B_IszeroSucc hvn _ ih =>
-    exact (Es_Iszero ih).append <| (MultiStepDeriv.lift <| .E_IszeroSucc hvn)
+  | B_PredZero _ ih => exact (Es_Pred ih).push .E_PredZero
+  | B_PredSucc hvn _ ih => exact (Es_Pred ih).push (.E_PredSucc hvn)
+  | B_IszeroZero _ ih => exact (Es_Iszero ih).push .E_IszeroZero
+  | B_IszeroSucc hvn _ ih => exact (Es_Iszero ih).push (.E_IszeroSucc hvn)
 }
 
 /-- 命題 A.9 -/
@@ -1282,72 +1232,43 @@ theorem big_from_evals {t v : T} (hv : isValue v) (h : t ⟶* v) : t ⇓ v := by
   induction h with
   | refl => exact .B_Value hv
   | step h hs ih => {
+    clear hs
     induction h generalizing v with
     | E_IfTrue => exact .B_IfTrue hv (.B_Value .true) ih
     | E_IfFalse => exact .B_IfFalse hv (.B_Value .false) ih
     | E_If h ih' => {
       cases ih with
-      | B_Value _ => exact absurd hv NB.isValue_not_If
-      | B_IfTrue hv' ih₁ ih₂ => {
-        have := ih' .true (evals_from_big ih₁) ih₁
-        exact .B_IfTrue hv' this ih₂
-      }
-      | B_IfFalse hv' ih₁ ih₂ => {
-        have := ih' .false (evals_from_big ih₁) ih₁
-        exact .B_IfFalse hv' this ih₂
-      }
+      | B_Value _ => exact absurd hv NB.not_isValue_If
+      | B_IfTrue _ ih₁ ih₂ => exact .B_IfTrue hv (ih' .true ih₁) ih₂
+      | B_IfFalse _ ih₁ ih₂ => exact .B_IfFalse hv (ih' .false ih₁) ih₂
     }
     | E_Succ h ih' => {
       cases ih with
       | B_Value _ => {
-        rcases hv with _ | _ | ⟨⟨_⟩⟩
-        rename_i hv
-        have := ih' (NB.isValue_of_isNat hv) .refl (.B_Value (NB.isValue_of_isNat hv))
-        exact .B_Succ hv this
+        simp only [NB.isNat_iff_isValue_succ] at hv -- なぜか rw ではできない
+        have hvn := NB.isValue_of_isNat hv
+        exact .B_Succ hv (ih' hvn (.B_Value hvn))
       }
-      | B_Succ hv' ih => {
-        have := ih' (NB.isValue_of_isNat hv') (evals_from_big ih) ih
-        exact .B_Succ hv' this
-      }
+      | B_Succ hv' ih => exact .B_Succ hv' (ih' (NB.isValue_of_isNat hv') ih)
     }
-    | E_PredZero => cases ih; exact eval.B_PredZero (.B_Value (.nat .zero))
+    | E_PredZero => cases ih; exact .B_PredZero (.B_Value NB.isValue_zero)
     | E_PredSucc h => {
-      have hv := isNat_of_evals_nat h hs
-      exact eval.B_PredSucc hv (.B_Succ hv ih)
+      have hvn : isNat v := isNat_of_isNat h ih
+      exact .B_PredSucc hvn (.B_Succ hvn ih)
     }
     | E_Pred h ih' => {
       cases ih with
-      | B_Value _ => exact absurd hv NB.isValue_not_pred
-      | B_PredZero => {
-        have := ih' (.nat .zero) (evals_from_big (by assumption)) (by assumption)
-        exact .B_PredZero this
-      }
-      | B_PredSucc hv' ih => {
-        have := ih' (NB.isValue_of_isNat hv'.succ) (evals_from_big ih) ih
-        exact .B_PredSucc hv' this
-      }
+      | B_Value _ => exact absurd hv NB.not_isValue_pred
+      | B_PredZero ih => exact .B_PredZero (ih' NB.isValue_zero ih)
+      | B_PredSucc hv' ih => exact .B_PredSucc hv' (ih' (NB.isValue_of_isNat hv'.succ) ih)
     }
-    | E_IszeroZero => {
-      cases hs with
-      | refl => exact .B_IszeroZero (.B_Value (.nat .zero))
-      | step h => exact absurd h (NB.isNormalForm_of_isValue _ .true _)
-    }
-    | E_IszeroSucc h => {
-      cases hs with
-      | refl => exact eval.B_IszeroSucc h (.B_Value (.nat h.succ))
-      | step h => exact absurd h (NB.isNormalForm_of_isValue _ .false _)
-    }
+    | E_IszeroZero => cases ih; exact .B_IszeroZero (.B_Value NB.isValue_zero)
+    | E_IszeroSucc h => cases ih; exact .B_IszeroSucc h (.B_Value (.nat h.succ))
     | E_Iszero h ih' => {
       cases ih with
-      | B_Value _ => exact absurd hv NB.isValue_not_iszero
-      | B_IszeroZero => {
-        have := ih' (.nat .zero) (evals_from_big (by assumption)) (by assumption)
-        exact .B_IszeroZero this
-      }
-      | B_IszeroSucc hv' ih => {
-        have := ih' (NB.isValue_of_isNat hv'.succ) (evals_from_big ih) ih
-        exact .B_IszeroSucc hv' this
-      }
+      | B_Value => exact absurd hv NB.not_isValue_iszero
+      | B_IszeroZero ih => exact .B_IszeroZero (ih' NB.isValue_zero ih)
+      | B_IszeroSucc hv' ih => exact .B_IszeroSucc hv' (ih' (NB.isValue_of_isNat hv'.succ) ih)
     }
   }
 }
@@ -1356,8 +1277,8 @@ section -- 演習 3.5.18
 
 inductive eval' : T -> T -> Prop
   | B_Value {v} : isValue v -> eval' v v
-  | B_IfThen {t₁ t₂ v₂ t₃} : eval' t₂ v₂ -> eval' (If t₁ t₂ t₃) (If t₁ v₂ t₃)
-  | B_IfElse {t₁ t₂ v₃ t₃} : eval' t₃ v₃ -> eval' (If t₁ t₂ t₃) (If t₁ t₂ v₃)
+  | B_IfThen {t₁ t₂ v₂ t₃} : isValue v₂ -> eval' t₂ v₂ -> eval' (If t₁ t₂ t₃) (If t₁ v₂ t₃)
+  | B_IfElse {t₁ t₂ v₃ t₃} : isValue v₃ -> eval' t₃ v₃ -> eval' (If t₁ t₂ t₃) (If t₁ t₂ v₃)
   | B_IfTrue {t₁ v₂ v₃} : isValue v₂ -> isValue v₃ -> eval' t₁ .true -> eval' (If t₁ v₂ v₃) v₂
   | B_IfFalse {t₁ v₂ v₃} : isValue v₂ -> isValue v₃ -> eval' t₁ .false -> eval' (If t₁ v₂ v₃) v₃
   | B_Succ {t₁ nv₁} : isNat nv₁ -> eval' t₁ nv₁ -> eval' (succ t₁) (succ nv₁)
