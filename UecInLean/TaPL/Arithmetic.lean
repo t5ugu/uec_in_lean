@@ -71,12 +71,6 @@ theorem MultiStepDeriv.ne_refl {t t' : T} (h : t ⟶* t') (hne : t ≠ t') :
   | step h_step h_rest => exact ⟨_, h_step, h_rest⟩
 }
 
-theorem contra_of_isNormalForm_of_evals {r s : T} (hr : isNormalForm r) (rEs : r ⟶* s) (h : r ≠ s) : False := by {
-  cases rEs with
-  | refl => exact h rfl
-  | step e _ => exact hr _ e
-}
-
 end MultiStepDeriv
 
 section Halting
@@ -112,7 +106,7 @@ section Determinancy
 
 class OneStepDeterminancy (T : Type) [Derivable T] where
   /-- 定理 3.5.4 -/
-  determinacy {t t' t'' : T} : t ⟶ t' → (t ⟶ t'') → t' = t''
+  determinacy {t t' t'' : T} : t ⟶ t' → t ⟶ t'' → t' = t''
 
 class MultiStepDeterminancy (T : Type) [Derivable T] where
   /-- 定理 3.5.11 -/
@@ -147,36 +141,29 @@ class Diamond (T : Type) [Derivable T] where
 
 variable {T : Type} [Derivable T] [inst : Diamond T]
 
--- rEt₁ の eval2 は、どの Derivable インスタンスを使うか明示するためのもの。
 /-- t側が1ステップの場合についての補題 -/
 theorem one_side_diamond {r s t₁ : T} (rEs : r ⟶* s) (rEt₁ : r ⟶ t₁) (ht₁Es : ¬ t₁ ⟶* s) : ∃ u, s ⟶ u ∧ t₁ ⟶* u := by {
   induction rEs generalizing t₁ with
   | refl => exact ⟨t₁, rEt₁, .refl⟩
   | step rEs₁ s₁Es ih => {
     rename_i s₁ r
-    rcases Classical.em (s₁ = t₁) with rfl | hs₁t₁
-    { contradiction }
-    { -- s₁ ≠ t₁ の場合
-      obtain s₁Et₁ | t₁Es₁ | ⟨u, s₁Eu, t₁Eu⟩ := inst.diamond_property rEs₁ rEt₁ hs₁t₁
-      { exact ih s₁Et₁ ht₁Es }
-      {
-        have t₁Es : t₁ ⟶* s := .step t₁Es₁ s₁Es
+    have hs₁t₁ : s₁ ≠ t₁ := by intro h; exact ht₁Es (h ▸ s₁Es)
+
+    obtain s₁Et₁ | t₁Es₁ | ⟨u, s₁Eu, t₁Eu⟩ := inst.diamond_property rEs₁ rEt₁ hs₁t₁
+    · exact ih s₁Et₁ ht₁Es
+    · have t₁Es : t₁ ⟶* s := .step t₁Es₁ s₁Es
+      contradiction
+    · have ⟨u', sEu', uEu'⟩ := ih s₁Eu (by {
+        intro uEs
+        have t₁Es : t₁ ⟶* s := .step t₁Eu uEs
         contradiction
-      }
-      {
-        have ⟨u', sEu', uEu'⟩ := ih s₁Eu (by {
-          intro uEs
-          have t₁Es : t₁ ⟶* s := .step t₁Eu uEs
-          contradiction
-        })
-        exact ⟨u', sEu', .step t₁Eu uEu'⟩
-      }
-    }
+      })
+      exact ⟨u', sEu', .step t₁Eu uEu'⟩
   }
 }
 
 /-- ダイヤモンド性を組み合わせて、大きなダイヤモンドを構成する -/
-theorem diamonds {r s t : T} (rEs : r ⟶* s) (rEt : r ⟶* t) (hst : s ≠ t) : s ⟶* t ∨ t ⟶* s ∨ ∃ u, s ⟶* u ∧ t ⟶* u := by {
+theorem diamonds {r s t : T} (rEs : r ⟶* s) (rEt : r ⟶* t) : s ⟶* t ∨ t ⟶* s ∨ ∃ u, s ⟶* u ∧ t ⟶* u := by {
   induction rEt generalizing s with
   | refl => right; left; exact rEs
   | step rEt₁ t₁Et ih => {
@@ -185,34 +172,33 @@ theorem diamonds {r s t : T} (rEs : r ⟶* s) (rEt : r ⟶* t) (hst : s ≠ t) :
     | step rEs₁ s₁Es => {
       rename_i t₁ r s₁
       rcases Classical.em (t₁ ⟶* s) with ht₁s | ht₁s
-      · exact ih ht₁s hst
-      {
-        have ⟨u, sEu, t₁Eu⟩ := one_side_diamond (.step rEs₁ s₁Es) rEt₁ ht₁s
-        rcases Classical.em (u = t) with rfl | hu
-        · left; exact .lift sEu
-        {
-          obtain uEt | tEu | ⟨u', uEu', tEu'⟩ := ih t₁Eu hu
-          · left; exact .step sEu uEt
-          · right; right; exact ⟨u, sEu, tEu⟩
-          · right; right; exact ⟨u', .step sEu uEu', tEu'⟩
-        }
-      }
+      · exact ih ht₁s
+      · have ⟨u, sEu, t₁Eu⟩ := one_side_diamond (.step rEs₁ s₁Es) rEt₁ ht₁s
+        obtain uEt | tEu | ⟨u', uEu', tEu'⟩ := ih t₁Eu
+        · left; exact .step sEu uEt
+        · right; right; exact ⟨u, sEu, tEu⟩
+        · right; right; exact ⟨u', .step sEu uEu', tEu'⟩
     }
   }
 }
 
 instance {T : Type} [Derivable T] [inst : Diamond T] : MultiStepDeterminancy T := ⟨by {
   intro r s t hs ht rEs rEt
-  apply Classical.byContradiction
-  intro hst -- `s ≠ t` と仮定すればダイヤモンド性を使える
-  obtain sEt | tEs | ⟨u, sEu, tEu⟩ := diamonds rEs rEt hst
-  · exact contra_of_isNormalForm_of_evals hs sEt hst
-  · exact contra_of_isNormalForm_of_evals ht tEs (Ne.symm hst)
-  {
-    cases tEu with
-    | refl => exact contra_of_isNormalForm_of_evals hs sEu hst
-    | step e _ => exact ht _ e
-  }
+  -- どんな大ダイヤモンド性についても、正規形なので `.refl` 以外ありえない
+  obtain sEt | tEs | ⟨_, sEu, tEu⟩ := diamonds rEs rEt
+  · cases sEt with
+    | refl => exact rfl
+    | step e _ => exact absurd e (hs _)
+  · cases tEs with
+    | refl => exact rfl
+    | step e _ => exact absurd e (ht _)
+  · cases tEu with
+    | refl => {
+      cases sEu with
+      | refl => exact rfl
+      | step e _ => exact absurd e (hs _)
+    }
+    | step e _ => exact absurd e (ht _)
 }⟩
 
 end Diamond
