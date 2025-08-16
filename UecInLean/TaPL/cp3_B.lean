@@ -2,7 +2,7 @@ import Mathlib.Tactic.Contrapose
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Use
 
-import UecInLean.TaPL.Arithmetic
+import UecInLean.TaPL.cp3_Arithmetic
 
 namespace UecInLean.TaPL
 

@@ -1,7 +1,7 @@
 import Mathlib.Data.Set.Defs
 import Mathlib.Tactic.Linarith
 
-import UecInLean.TaPL.Arithmetic
+import UecInLean.TaPL.cp3_Arithmetic
 
 namespace UecInLean.TaPL
 
