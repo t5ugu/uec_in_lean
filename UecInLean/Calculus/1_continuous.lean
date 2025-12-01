@@ -407,7 +407,7 @@ theorem ConvergesTo_mul {a b α β} (ha : a n⟶ α) (hb : b n⟶ β) : (a * b) 
     calc
       |a n * b n - (α * β)|
       _ = |a n * (b n - β) + β * (a n - α)| := by ring_nf
-      _ ≤ |a n * (b n - β)| + |β * (a n - α)| := by simp only [abs_abs, abs_add_le]
+      _ ≤ |a n * (b n - β)| + |β * (a n - α)| := by simp only [abs_add_le]
       _ = |a n| * |b n - β| + |β| * |a n - α| := by simp only [abs_mul]
   }
   apply ConvergesTo_zero_add
@@ -475,8 +475,3 @@ theorem ConvergesTo_div {a b α β} (ha : a n⟶ α) (hb : b n⟶ β) (hβ : β 
   conv => arg 1; intro; rw [div_eq_mul_one_div]
   exact ConvergesTo_mul ha (ConvergesTo_inv hb hβ)
 }
-
-#check (1 : ℝ)⁻¹
-
--- C:\Users\n2513152\uec\uec_in_lean\.lake\packages\mathlib\Mathlib\Analysis\Calculus\MeanValue.lean
-#check inv_zero
