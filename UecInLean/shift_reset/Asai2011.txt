@@ -1,0 +1,1573 @@
+shift/reset
+
+23
+
+9
+
+23
+
+goto
+
+shift
+
+reset
+CW 2011
+OCaml, Standard ML, Scheme, Haskell
+
+1
+
+[13]
+
+Scheme
+
+Felleisen
+Rémy, Riecke
+
+Standard ML
+
+call/cc
+
+control/prompt [6] Danvy
+
+cupto/prompt [8]
+
+Danvy
+
+call/cc
+
+Filinski
+Filinski
+
+[9]
+
+shift/reset
+
+shift/reset [4] Gunter,
+shift/reset
+[2]
+
+shift/reset
+
+1.1
+shift/reset
+• call/cc
+
+shift/reset
+[5] Scheme
+
+Standard ML
+
+shift/reset
+
+type
+
+1
+
+Filinski
+answer
+
+• Gasbichler
+
+Sperber
+
+• Racket
+
+shift/reset
+
+• Kiselyov
+
+Scheme48
+
+Delimcc library
+
+shift/reset
+
+• MinCaml
+
+[7]
+
+shift/reset
+
+call/cc
+
+OCaml
+
+[10]
+
+[11] answer type
+
+shift/reset
+
+Caml Light
+
+shift/reset
+
+OchaCaml [12]
+OchaCaml
+
+shift/reset
+
+1.2
+3
+
+shift/reset
+shift/reset
+
+1.3
+OCaml, Standard ML, Scheme, Haskell
+3
+
+2
+
+let
+
+λ
+
+shift/reset
+
+2.1
+redex
+[ . . . ] hole
+3+5∗2−1
+
+5∗2
+
+3+[·]−1
+3
+
+1
+
+[·]
+
+3 + [5 ∗ 2] − 1
+5∗2
+
+10
+
+hole
+[·]
+
+raise Abort
+
+3+[·]−1
+5∗2
+3 + 10 − 1
+[·]−1
+
+1
+13 − 1
+
+13 − 1
+[·]
+1
+
+[3 + 10] − 1
+
+3 + 10
+
+[·]
+
+(1) 5 * (2 * 3 + 3 * 4)
+(2) (if 2 = 3 then "hello" else "hi") ^ " world"
+2
+
+3 + 10
+[13 − 1]
+
+(3) fst (let x = 1 + 2 in (x, x))
+(4) string_length ("x" ^ string_of_int (3 + 1))
+
+2.2
+3 + [5 ∗ 2] − 1
+
+[·]
+
+⟨· · ·⟩
+⟨3 + [ · ]⟩
+
+3+[·]−1
+⟨3 + [5 ∗ 2]⟩ − 1
+
+−1
+
+2.3
+
+reset
+OchaCaml
+
+reset
+reset (fun () -> M )
+M
+
+M
+
+reset
+
+reset (fun () -> 3 + [5 * 2]) - 1
+5∗2
+
+3
+
+5∗2
+
+1
+
+reset
+
+5∗2
+1
+reset
+
+10
+
+3
+
+12
+try ... with Abort -> ...
+
+raise Abort
+
+reset (fun () -> 3 + [5 * 2]) - 1
+
+(try 3 + [raise Abort] with Abort -> 0) - 1
+3+[·]
+2
+(1) 5 * reset (fun () -> [2 * 3] + 3 * 4)
+(2) reset (fun () -> if [2 = 3] then "hello" else "hi") ^ " world"
+(3) fst (reset (fun () -> let x = [1 + 2] in (x, x)))
+(4) string_length (reset (fun () -> "x" ^ string_of_int [3 + 1]))
+
+2.4
+
+shift
+
+OchaCaml
+
+shift
+
+shift
+
+shift (fun k -> M )
+shift
+(1)
+(2)
+
+13
+
+k
+3
+
+reset
+
+(3) M
+
+2.5
+
+shift (fun _ -> M )
+_
+
+k
+
+shift (fun k ->
+
+M)
+(1)
+(2)
+
+(fun _ -> M )
+
+M
+
+(3) M
+M
+
+reset
+3 + [5 ∗ 2] − 1
+[·]
+
+5∗2
+
+reset
+
+shift (fun _ -> 5 * 2)
+
+# reset (fun () -> 3 + shift (fun _ -> 5 * 2) - 1) ;;
+- : int = 10
+#
+M
+
+5∗2
+
+10
+
+# reset (fun () -> 3 + shift (fun _ -> "hello") - 1) ;;
+- : string = "hello"
+#
+3+[·]−1
+
+int -> int
+
+reset
+# reset (fun () -> 3 + shift (fun _ -> 5 * 2)) - 1 ;;
+- : int = 9
+#
+3+[·]
+
+1
+1
+
+reset
+# reset (fun () -> 3 + shift (fun _ -> "hello")) - 1 ;;
+Toplevel input:
+> reset (fun () -> 3 + shift (fun _ -> "hello")) - 1 ;;
+> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This expression has type string,
+but is used with type int.
+#
+3
+
+[·]
+
+shift (fun _ -> M )
+
+(1) 5 * reset (fun () -> [·] + 3 * 4)
+4
+
+(2) reset (fun () -> if [·] then "hello" else "hi") ^ " world"
+(3) fst (reset (fun () -> let x = [·] in (x, x)))
+(4) string_length (reset (fun () -> "x" ^ string_of_int [·]))
+4
+(* times : int list -> int *)
+let rec times lst = match lst with
+[] -> 1
+| first :: rest -> first * times rest
+[2; 3; 5]
+
+30
+
+[2; 3; 0; 5]
+
+0
+
+0
+
+0
+
+0
+
+| 0 :: rest -> ...
+
+2.6
+
+shift (fun k -> k)
+
+(1)
+(2)
+
+k
+
+(3) k
+k
+
+k
+
+shift (fun k -> k)
+
+3 + [5 ∗ 2] − 1
+
+reset
+
+[·]
+
+shift
+
+(fun k -> k)
+# let f x = reset (fun () -> 3 + shift (fun k -> k) - 1) x ;;
+f : int -> int = <fun>
+#
+x
+# let f = reset (fun () -> 3 + shift (fun k -> k) - 1) ;;
+f : int => int = <fun>
+#
+f
+
+reset
+
+OchaCaml
+
+f
+OchaCaml
+
+=>
+
+3.4
+3+[·]−1
+
+f
+
+[·]
+5
+
+10
+
+# f 10 ;;
+- : int = 12
+#
+f
+
+fun x -> 3 + x - 1
+[·]
+
+5
+
+shift (fun k -> k)
+
+(1) reset (fun () -> 5 * ([·] + 3 * 4))
+(2) reset (fun () -> (if [·] then "hello" else "hi") ^ " world")
+(3) reset (fun () -> fst (let x = [·] in (x, x)))
+(4) reset (fun () -> string_length ("x" ^ string_of_int [·]))
+6
+(* id : ’a list -> ’a list *)
+let rec id lst = match lst with
+[] -> []
+| first :: rest -> first :: id rest ;;
+[1; 2; 3]
+reset (fun () -> id [1; 2; 3]) ;;
+lst
+
+id
+shift (fun k -> k)
+
+2.7
+
+type tree_t = Empty
+| Node of tree_t * int * tree_t ;;
+traverse
+(* walk : tree_t -> unit *)
+let rec walk tree = match tree with
+Empty -> ()
+| Node (t1, n, t2) ->
+walk t1;
+print_int n;
+walk t2
+Node
+# let tree1 = Node (Node (Empty, 1, Empty), 2, Node (Empty, 3, Empty)) ;;
+tree1 : tree_t = Node (Node (Empty, 1, Empty), 2, Node (Empty, 3, Empty))
+# walk tree1 ;;
+123- : unit = ()
+#
+
+6
+
+Node
+
+Node
+
+Node
+let rec walk tree = match tree with
+Empty -> ()
+| Node (t1, n, t2) ->
+walk t1;
+yield n;
+walk t2 ;;
+yield
+(* yield : int => unit *)
+let yield n = shift (fun k -> Next (n, k)) ;;
+walk
+
+Node
+
+n
+Node
+
+k
+
+()
+
+Next
+
+walk
+
+walk
+
+shift
+
+traverse
+
+n
+yield
+
+()
+
+walk
+
+reset
+
+reset (fun () -> walk tree1) ;;
+tree1
+reset
+
+()
+
+Next (n, k)
+
+walk
+
+shift
+
+walk
+
+()
+
+Next (n, k)
+walk
+
+reset
+Node
+
+()
+
+Done
+
+Done
+
+reset
+
+(* start : tree_t -> ’a result_t *)
+let start tree =
+reset (fun () -> walk tree; Done) ;;
+reset
+
+reset
+
+yield
+
+shift
+
+shift
+
+reset
+Next
+
+Done
+
+type ’a result_t = Done
+| Next of int * (unit / ’a -> ’a result_t / ’a) ;;
+Done
+
+Next
+Done
+
+Next
+
+Node
+
+()
+
+unit -> ’a result_t
+
+’a
+(* print_nodes : tree_t -> unit *)
+let print_nodes tree =
+let rec loop r = match r with
+Done -> ()
+
+(* no more nodes *)
+
+| Next (n, k) ->
+print_int n;
+
+(* print n *)
+
+7
+
+shift/reset
+
+loop (k ()) in
+
+(* and continue *)
+
+loop (start tree) ;;
+traverse
+
+start
+n
+
+loop
+
+Done
+
+Node
+
+()
+
+traverse
+
+k
+
+traverse
+Next (n, k)
+
+tree1
+
+# print_nodes tree1 ;;
+123- : unit = ()
+#
+
+(* add_tree : tree_t -> int *)
+let add_tree tree =
+let rec loop r = match r with
+Done -> 0
+| Next (n, k) -> n + loop (k ()) in
+loop (start tree) ;;
+
+# add_tree tree1 ;;
+- : int = 6
+#
+
+7
+
+same_fringe
+
+traverse
+
+tree_t
+
+Node
+
+same_fringe
+
+true
+let tree1 = Node (Node (Empty, 1, Empty), 2, Node (Empty, 3, Empty)) ;;
+let tree2 = Node (Empty, 1, Node (Empty, 2, Node (Empty, 3, Empty))) ;;
+
+false
+
+2.8
+
+printf
+
+shift
+
+k
+
+k
+fun
+
+reset
+shift (fun k -> fun () -> k "hello")
+k
+reset
+
+fun () -> k "hello"
+
+thunk 0
+
+"hello"
+
+reset
+
+()
+
+"hello"
+()
+thunk
+
+[ ] ^ "world"
+1
+1f
+
+x
+
+8
+
+# let f x = reset (fun () ->
+shift (fun k -> fun () -> k "hello") ^ " world") x ;;
+f : unit -> string = <fun>
+#
+thunk
+
+()
+
+"hello"
+
+# f () ;;
+- : string = "hello world"
+#
+thunk
+
+reset
+
+()
+
+reset
+
+shift (fun k -> fun () -> k "hello")
+reset
+
+reset
+
+()
+
+reset
+printf
+8
+
+[...]
+
+[1]
+
+"world"
+
+"hello world!"
+
+reset (fun () -> "hello " ^ [...] ^ "!")
+[...]
+
+reset
+
+[...]
+
+[...]
+# reset (fun () -> "hello " ^ [...] ^ "!") "world" ;;
+- : string = "hello world!"
+#
+[...]
+
+%s
+
+%d
+OchaCaml
+
+string_of_int
+
+2.9
+shift/reset
+reset (fun () -> [...] ^ " world")
+reset
+
+printf
+
+^
+
+"hello"
+printf
+reset
+* 2])
+
+int
+
+reset (fun () -> 3 + [5
+reset (fun () -> string_of_int [5 * 2]),
+
+string
+hole
+
+shift
+
+5 * 2
+3 + [...])
+
+reset (fun () -> string_of_int [...])
+
+* 2
+
+9
+
+reset (fun () ->
+5
+
+shift
+
+shift
+shift
+
+reset
+
+reset
+
+reset (fun () -> [...] ^ " world")
+reset
+string -> string
+
+[...]
+
+shift (fun k -> fun () -> k "hello")
+thunk
+
+reset
+thunk
+
+thunk
+
+k
+
+unit -> string
+
+string -> string
+reset
+
+shift
+
+string
+
+unit -> string
+()
+
+shift
+
+reset
+
+shift/reset
+OchaCaml
+
+3.4
+
+2.10
+reset
+printf
+
+"world"
+
+reset (fun () -> M ) 3
+3
+
+M
+
+# let get () =
+shift (fun k -> fun state -> k state state) ;;
+get : unit => ’a = <fun>
+#
+get
+
+shift
+
+fun state -> k state state
+3
+
+reset
+state
+
+k
+
+get
+
+k
+
+state
+
+state
+
+get
+
+state
+
+k
+k
+
+reset
+
+reset
+
+k state
+
+k
+
+get
+
+get
+
+state
+1
+
+()
+# let tick () =
+shift (fun k -> fun state -> k () (state + 1)) ;;
+tick : unit => unit = <fun>
+#
+
+# let run_state thunk =
+reset (fun () -> let result = thunk () in
+
+10
+
+fun state -> result) 0 ;;
+run_state : (unit => ’a) => ’b = <fun>
+#
+0
+
+thunk
+
+thunk
+
+result
+# run_state (fun () ->
+tick ();
+
+(* state = 1 *)
+
+tick ();
+
+(* state = 2 *)
+
+let a = get () in
+tick ();
+
+(* state = 3 *)
+
+get () - a) ;;
+- : int = 1
+#
+9
+run_state (fun () ->
+(tick (); get ()) - (tick (); get ())) ;;
+OchaCaml
+10
+
+put
+
+put x
+
+x
+
+()
+
+2.11
+shift
+
+k
+
+k
+
+# reset (fun () -> 1 + (shift (fun k -> 2 * k 3))) ;;
+- : int = 8
+#
+1 + [...]
+
+3
+
+2 * [...]
+
+2
+
+A
+
+type term_t = Var of string
+| Lam of string * term_t
+| App of term_t * term_t ;;
+A
+S
+
+λx.λy.λz.(xz)(yz)
+
+A
+
+λx.λy.λz.let t1 = xz in let t2 = yz in let t3 = t1 t2 in t3
+A
+
+traverse
+
+(* id_term : term_t -> term_t *)
+let rec id_term term = match term with
+Var (x) -> Var (x)
+| Lam (x, t) -> Lam (x, id_term t)
+11
+
+1
+
+| App (t1, t2) -> App (id_term t1, id_term t2) ;;
+
+(* id_term’ : term_t -> term_t *)
+let rec id_term’ term = match term with
+Var (x) -> Var (x)
+| Lam (x, t) -> Lam (x, id_term’ t)
+| App (t1, t2) ->
+let t = gensym () in
+
+(* generate fresh variable *)
+
+App (Lam (t, Var (t)), (* let expression *)
+App (id_term’ t1, id_term’ t2)) ;;
+let
+
+let t = M in N
+
+(λt.N )M
+
+S
+λx.λy.λz.let t1 = (let t2 = xz in t2 )(let t3 = yz in t3 ) in t1
+let
+let
+S
+
+xz
+
+id_term’
+yz
+
+λx.λy.λz.let t1 = [ · ](let t3 = yz in t3 ) in t1
+let
+
+xz
+
+let
+
+let t2 = xz in [·]
+
+let t1 = [ · ](let t3 = yz in t3 ) in t1
+(* a_normal : term_t => term_t *)
+let rec a_normal term = match term with
+Var (x) -> Var (x)
+| Lam (x, t) -> Lam (x, reset (fun () -> a_normal t))
+| App (t1, t2) ->
+shift (fun k ->
+let t = gensym () in
+App (Lam (t,
+
+(* generate fresh variable *)
+(* let expression *)
+
+k (Var (t))), (* continue with new variable *)
+App (a_normal t1, a_normal t2))) ;;
+App
+
+shift
+
+k
+
+A
+
+t
+t
+Lam
+
+A
+11
+
+reset
+let insertion
+
+A
+
+S
+
+2.12
+1
+
+12
+
+(* either : ’a -> ’a -> ’a *)
+let either a b =
+shift (fun k -> k a; k b) ;;
+a b
+
+k
+
+a b
+
+a b
+# reset (fun () ->
+let x = either 0 1 in
+print_int x;
+print_newline ()) ;;
+0
+1
+- : unit = ()
+#
+2
+
+either
+
+2
+
+x
+
+12
+choice
+either
+generate and test
+
+P
+
+Q
+
+(P ∨ Q) ∧ (P ∨ ¬Q) ∧ (¬P ∨ ¬Q)
+P
+
+Q
+
+true
+
+false
+
+# reset (fun () ->
+let p = either true false in
+let q = either true false in
+if (p || q) && (p || not q) && (not p || not q)
+then (print_string (string_of_bool p);
+print_string ", ";
+print_string (string_of_bool q);
+print_newline ())) ;;
+true, false
+- : unit = ()
+#
+p
+
+q
+
+either
+if
+
+either
+
+a b
+13 Using choice, deﬁne a function that searches for three natural numbers between 1 and 5 that satisfy
+
+the Pythagorean theorem. In other words, ﬁnd 1 ≤ x, y, z ≤ 5 such that x2 + y 2 = z 2 .
+14
+x2 + y 2 = z 2
+
+1
+
+choice
+1
+
+5
+
+x, y, z
+
+13
+
+5
+
+3
+let
+
+shift/reset
+to-right2
+
+(call by value; CBV)
+
+left-
+
+λ-
+
+3.1
+V
+
+::=
+
+( )
+
+M
+
+::=
+
+V | M M | let x = M in M | Sk. M | ⟨M ⟩
+
+)
+
+F
+
+::=
+
+[ ] | F M | V F | let x = F in M
+
+)
+
+E
+
+::=
+
+[ ] | E M | V E | let x = E in M | ⟨E⟩
+
+(
+(
+shift (fun k -> M)
+
+x | λx. M
+
+( )
+
+Sk. M
+
+reset (fun () -> M)
+hole [ ]
+
+⟨M ⟩
+
+reset
+
+3.2
+(λx. M ) V
+
+; M [x := V ]
+
+let x = V in M
+
+; M [x := V ]
+
+⟨V ⟩
+⟨F [S V ]⟩
+
+; V
+; ⟨V (λx. ⟨F [x]⟩)⟩
+
+β-
+
+x is fresh
+
+reset
+shift
+
+reset
+reset
+λx. ⟨F [x]⟩
+
+F[ ]
+
+reset
+
+F[ ]
+
+reset
+
+V
+reset
+
+3.3
+
+E[M ]
+
+→ E[M ′ ] if
+
+(1)
+
+; M′
+
+E[M ]
+
+(2) M
+
+M′
+
+(3) M ′
+
+E[ ]
+
+2 OchaCaml
+
+M
+
+E[M ′ ]
+
+right-to-left
+
+14
+
+M
+
+redex
+
+3.4
+t
+
+τ1 /α → τ2 /β
+[3]
+
+τ1
+
+t | τ /τ → τ /τ
+
+σ
+
+::=
+
+τ | ∀t.σ
+answer type
+α
+
+answer type
+
+pure
+
+β
+β
+
+polymorphic
+
+answer type
+
+answer type
+
+τ1 -> τ2
+
+answer type
+
+τ1 => τ2
+
+α
+
+shift
+
+pure
+
+pure
+
+::=
+
+τ2
+
+control eﬀect
+
+OchaCaml
+
+τ
+
+shift
+
+answer type
+
+answer type
+
+polymorphic
+
+#answer "all";;
+
+τ1 / α -> τ2 / β
+Γ ⊢p M : τ
+Γ, α ⊢ M : τ, β
+Γ
+
+M
+pure
+answer type
+α
+
+M
+
+τ
+β
+
+(x : σ) ∈ Γ σ ≻ τ
+(var)
+Γ ⊢p x : τ
+
+Γ
+
+M
+
+τ
+
+Γ, x : τ1 , α ⊢ M : τ2 , β
+(fun)
+Γ ⊢p λx. M : τ1 /α → τ2 /β
+
+Γ, γ ⊢ M1 : τ1 /α → τ2 /β, δ Γ, β ⊢ M2 : τ1 , γ
+(app)
+Γ, α ⊢ M1 M2 : τ2 , δ
+
+Γ ⊢p M : τ
+(exp)
+Γ, α ⊢ M : τ, α
+
+Γ ⊢p M1 : τ1 Γ, x : Gen(τ1 , Γ), α ⊢ M2 : τ2 , β
+(let)
+Γ, α ⊢ let x = M1 in M2 : τ2 , β
+Γ, k : ∀t.(τ /t → α/t), γ ⊢ M : γ, β
+(shift)
+Γ, α ⊢ Sk. M : τ, β
+σ≻τ
+
+τ
+
+Γ
+
+3.5
+
+Γ, γ ⊢ M : γ, τ
+(reset)
+Γ ⊢p ⟨M ⟩ : τ
+
+σ
+∀
+
+Gen(τ, Γ)
+
+τ
+
+[5 * 2]
+
+answer type
+
+Answer Type
+
+Answer type
+reset (fun () -> 3 + [5 * 2] - 1)
+[5 * 2]
+3 + [5 * 2] - 1
+
+int
+
+5 * 2
+
+int
+
+int
+Γ, int ⊢ 5 * 2 : int, int
+int
+5 * 2
+
+5 * 2
+
+answer type
+
+int
+
+answer type
+answer type
+
+reset (fun -> if [2 = 3] then 1 + 2 else 3 - 1)
+
+15
+
+5 * 2
+
+int
+
+2 = 3
+
+bool
+
+2 = 3
+
+1 + 2
+
+3 - 1
+
+int
+Γ, int ⊢ 2 = 3 : bool, int
+answer type
+
+answer type
+
+pure
+
+pure
+
+answer type
+
+answer type
+answer type
+reset (fun () ->
+[shift (fun k -> fun () -> k "hello")] ^ " world")
+shift (fun k -> fun () -> k "hello")
+[...] ^ " world"
+[...]
+
+string
+
+[...]
+
+shift (...)
+
+^
+
+string
+
+[...] ^ " world"
+
+[...]
+
+string
+
+[...]
+
+k
+fun () -> k "hello"
+
+unit
+
+"hello world"
+
+unit -> string
+Γ, string ⊢ shift (fun k -> ...) : string, unit -> string
+answer type
+shift
+
+unit -> string
+
+unit / ’a -> string / ’a
+
+answer type
+
+answer
+
+type modiﬁcation
+2.10
+
+get
+
+answer type
+
+()
+answer type
+
+unit -> int
+
+get
+
+reset (fun () ->
+let result = [get ()] + 2 * get () in
+fun i -> result)
+fun i -> result
+
+int -> int
+
+get
+
+get
+
+(int -> int) -> int / (int -> int)
+
+unit /
+
+get
+
+unit / (’a / ’b -> ’c / ’d) -> ’a / (’a / ’b -> ’c / ’d)
+shift/reset
+
+answer type
+
+[1] Asai, K. “On Typing Delimited Continuations: Three New Solutions to the Printf Problem,” Higher-Order
+and Symbolic Computation, Vol. 22, No. 3, pp. 275–291, Kluwer Academic Publishers (September 2009).
+[2] Asai, K., and Y. Kameyama “Polymorphic Delimited Continuations,” Proceedings of the Fifth Asian Symposium on Programming Languages and Systems (APLAS’07), LNCS 4807, pp. 239–254 (November 2007).
+[3] Danvy, O., and A. Filinski “A Functional Abstraction of Typed Contexts,” Technical Report 89/12, DIKU,
+University of Copenhagen (July 1989).
+16
+
+[4] Danvy, O., and A. Filinski “Abstracting Control,” Proceedings of the 1990 ACM Conference on Lisp and
+Functional Programming, pp. 151–160 (June 1990).
+[5] Filinski, A. “Representing Monads,” Conference Record of the 21st Annual ACM Symposium on Principles
+of Programming Languages, pp. 446–457 (January 1994).
+[6] Felleisen, M. “The Theory and Practice of First-Class Prompts,” Conference Record of the 15th Annual ACM
+Symposium on Principles of Programming Languages, pp. 180–190 (January 1988).
+[7] Gasbichler, M., and M. Sperber “Final Shift for Call/cc: Direct Implementation of Shift and Reset,” Proceedings of the ACM SIGPLAN International Conference on Functional Programming (ICFP’02), pp. 271–282
+(October 2002).
+[8] Gunter, C. A., D. Rémy, and J. G. Riecke “A Generalization of Exceptions and Control in ML-Like Languages,” Proceedings of the Seventh International Conference on Functional Programming Languages and
+Computer Architecture (FPCA’95), pp. 12–23 (June 1995).
+[9] Kameyama, Y., and M. Hasegawa “A Sound and Complete Axiomatization of Delimited Continuations,”
+Proceedings of the eighth ACM SIGPLAN International Conference on Functional Programming (ICFP’03),
+pp. 177–188 (August 2003).
+[10] Kiselyov, O. “Delimited Control in OCaml, Abstractly and Concretely: System Description,” In M. Blume,
+N. Kobayashi, and G. Vidal, editors, Functional and Logic Programming (LNCS 6009), pp. 304–320 (April
+2010).
+[11] Masuko, M., and K. Asai “Direct Implementation of Shift and Reset in the MinCaml Compiler,” Proceedings
+of the 2009 ACM SIGPLAN Workshop on ML, pp. 49–60 (September 2009).
+[12] Masuko, M., and K. Asai “Caml Light + shift/reset = Caml Shift,” Theory and Practice of Delimited Continuations (TPDC 2011), pp. 33–46 (May 2011).
+[13] Plotkin, G. D. “Call-by-name, call-by-value, and the λ-calculus,” Theoretical Computer Science, Vol. 1, No. 2,
+pp. 125–159 (December 1975).
+
+17
+
+
