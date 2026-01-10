@@ -1,0 +1,13 @@
+
+shift/reset プログラミング入門
+http://pllab.is.ocha.ac.jp/~asai/cw2011tutorial/main-j.pdf
+
+
+浅井先生の「shift/reset プログラミング入門」の読書/計算メモ
+https://ashiato45.hatenablog.jp/entry/2024/03/03/231126
+
+
+4種類の限定継続演算子のための型システム
+http://pllab.is.ocha.ac.jp/~asai/jpapers/ppl/ishio22.pdf
+
+https://github.com/chiaki-i/type4d/blob/main/code/4D.agda
