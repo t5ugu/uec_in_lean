@@ -23,7 +23,7 @@ infixr:90 " ≫ " => CategoryStruct.comp
 
 attribute [simp, grind =] Category.id_comp Category.comp_id Category.comp_assoc
 
-structure Functor (C : Type u) (D : Type v) [Category C] [Category D] where
+structure Functor (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] where
   obj : C → D
   map {x y : C} : (x ⟶ y) → (obj x ⟶ obj y)
   map_id (x : C) : map (𝟙 x) = 𝟙 (obj x) := by grind
@@ -142,12 +142,14 @@ theorem Category.Fun_id {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v
 theorem Category.Fun_comp {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
   {F G H : C ⥤ D} (η : F ⟶ G) (θ : G ⟶ H) : η ≫ θ = NatTrans.vcomp η θ := rfl
 
-instance Category.Discrete (n : Nat) : Category.{v} (Fin n) where
-  hom x y := ULift <| PLift (x.val = y.val)
-  id x := ⟨⟨rfl⟩⟩
-  comp := fun ⟨⟨hf⟩⟩ ⟨⟨hg⟩⟩ => ⟨⟨by rw [hf, hg]⟩⟩
+instance (P : Type u) [LE P] [Std.IsPreorder P] : Category.{v} P where
+  hom x y := ULift <| PLift (x ≤ y)
+  id x := ⟨⟨Std.le_refl x⟩⟩
+  comp := fun ⟨⟨hxy⟩⟩ ⟨⟨hyz⟩⟩ => ⟨⟨Std.le_trans hxy hyz⟩⟩
+  id_comp := fun ⟨⟨_⟩⟩ => rfl
+  comp_id := fun ⟨⟨_⟩⟩ => rfl
+  comp_assoc := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl
 
-instance Category.Discrete_hom_subsingleton {n} {x : Fin n} : Subsingleton (x ⟶ x) where
+instance {P : Type u} [LE P] [Std.IsPreorder P]
+  {x y : P} : Subsingleton (x ⟶ y) where
   allEq := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl -- by proof irrelevance
-
-end UecInLean
