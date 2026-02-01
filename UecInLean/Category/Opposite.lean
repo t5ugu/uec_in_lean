@@ -1,8 +1,9 @@
 import UecInLean.Category.Basic
+import UecInLean.Category.Iso
 
 namespace UecInLean
 
-universe v u
+universe v v' u u'
 
 structure Opposite (α : Type u) where
   op ::
@@ -33,3 +34,17 @@ theorem Category.Opposite_id {C : Type u} [Category C] (X : C) : @CategoryStruct
 @[simp, grind =]
 theorem Category.Opposite_comp {C : Type u} [Category C]
   {X Y Z : Cᵒᵖ} (f : X ⟶ Y) (g : Y ⟶ Z) : f ≫ g = @CategoryStruct.comp C _ _ _ _ g f := rfl
+
+def Functor.Opposite {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
+  (F : C ⥤ D) : Cᵒᵖ ⥤ Dᵒᵖ where
+  obj := fun ⟨x⟩ => ⟨F.obj x⟩
+  map f := F.map f
+  map_id x := F.map_id x.unop
+  map_comp f g := F.map_comp g f
+
+def Functor.unOpposite {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
+  (F : Cᵒᵖ ⥤ Dᵒᵖ) : C ⥤ D where
+  obj x := (F.obj ⟨x⟩).unop
+  map f := F.map f
+  map_id x := F.map_id ⟨x⟩
+  map_comp f g := F.map_comp g f

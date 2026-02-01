@@ -14,14 +14,19 @@ instance Category.Prod {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'
 
 @[simp, grind =]
 theorem Category.Prod_hom {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  (X Y : C × D) : @Category.hom (C × D) _ X Y = ((X.1 ⟶ Y.1) × (X.2 ⟶ Y.2)) := rfl
+  (X Y : C × D) : X ⟶ Y = ((X.1 ⟶ Y.1) × (X.2 ⟶ Y.2)) := rfl
 @[simp, grind =]
 theorem Category.Prod_id {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  (X : C × D) : @Category.id (C × D) _ X = (Category.id X.1, Category.id X.2) := rfl
+  (X : C × D) : 𝟙 X = (𝟙 X.1, 𝟙 X.2) := rfl
 @[simp, grind =]
 theorem Category.Prod_comp {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
   {X Y Z : C × D} (f : X ⟶ Y) (g : Y ⟶ Z) :
-  @Category.comp (C × D) _ _ _ _ f g = (f.1 ≫ g.1, f.2 ≫ g.2) := rfl
+  f ≫ g = (f.1 ≫ g.1, f.2 ≫ g.2) := rfl
+
+def Category.Prod_hom_fst {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
+  {X Y : C × D} (f : X ⟶ Y) : X.1 ⟶ Y.1 := f.1
+def Category.Prod_hom_snd {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
+  {X Y : C × D} (f : X ⟶ Y) : X.2 ⟶ Y.2 := f.2
 
 universe u₀ u₁ u₂ u₀' u₁' v₀ v₁ v₂ v₀' v₁'
 
@@ -58,12 +63,12 @@ def Functor.curry {C : Type u₀} {D : Type u₁} {E : Type u₂}
   (F : (C × D) ⥤ E) : C ⥤ (D ⥤ E) where
     obj x := {
       obj y := F.obj (x, y)
-      map f := F.map (Category.id x, f)
+      map f := F.map (𝟙 x, f)
       map_id y := F.map_id (x, y)
       map_comp f g := by simp [← F.map_comp]
     }
     map f := {
-      app y := F.map (f, Category.id y)
+      app y := F.map (f, 𝟙 y)
       naturality g := by simp [← F.map_comp]
     }
     map_id x := by {

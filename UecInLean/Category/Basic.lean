@@ -4,7 +4,7 @@ namespace UecInLean
 @[simp, grind =_]
 theorem id_refl {α} : (fun x : α => x) = id := rfl
 
-universe v v' v'' u u' u''
+universe v v' v'' v₀ v₁ u u' u'' u₀ u₁
 
 class CategoryStruct (C : Type u) where
   hom : C → C → Type v
@@ -34,17 +34,21 @@ infixr:30 " ⥤ " => Functor
 
 attribute [simp, grind =] Functor.map_id Functor.map_comp
 
-def Functor.id (C : Type u) [Category C] : C ⥤ C where
+theorem Functor.map_inj {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
+  (F : C ⥤ D) {x y : C} {f g : x ⟶ y} (h : f = g) :
+  F.map f = F.map g := by rw [h]
+
+def Functor.id (C : Type u) [Category.{v} C] : C ⥤ C where
   obj x := x
   map f := f
   map_id x := by rfl
   map_comp f g := by rfl
 
 @[simp, grind =]
-theorem Functor.id_obj {C : Type u} [Category C] (x : C) :
+theorem Functor.id_obj {C : Type u} [Category.{v} C] (x : C) :
   (Functor.id C).obj x = x := rfl
 @[simp, grind =]
-theorem Functor.id_map {C : Type u} [Category C] {x y : C} (f : x ⟶ y) :
+theorem Functor.id_map {C : Type u} [Category.{v} C] {x y : C} (f : x ⟶ y) :
   (Functor.id C).map f = f := rfl
 
 def Functor.comp {A : Type u} {B : Type u'} {C : Type u''}
@@ -99,6 +103,44 @@ theorem NatTrans.vcomp_app {C : Type u} {D : Type u'} [Category.{v} C] [Category
   {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H) (x : C)
 : (NatTrans.vcomp η θ).app x = η.app x ≫ θ.app x := rfl
 
+def NatTrans.whiskering {A : Type u₀} {C : Type u} {D : Type u'} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v'} D] [Category.{v₁} B]
+  (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) : (F ⋙ G ⋙ I) ⟹ (F ⋙ H ⋙ I) := {
+    app a := I.map (η.app (F.obj a))
+    naturality f := by {
+      simp only [Functor.comp_map, ← I.map_comp]
+      apply I.map_inj
+      exact η.naturality (F.map f)
+    }
+  }
+
+def NatTrans.whiskerLeft {A : Type u₀} {C : Type u} {D : Type u'} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v'} D] [Category.{v₁} B]
+  {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : (F ⋙ H) ⟹ (G ⋙ H) := {
+    app a := H.map (η.app a)
+    naturality f := by {
+      simp only [Functor.comp_map, ← H.map_comp]
+      apply H.map_inj
+      exact η.naturality f
+    }
+  }
+
+def NatTrans.whiskerRight {A : Type u₀} {C : Type u} {D : Type u'} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v'} D] [Category.{v₁} B]
+  (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) : (F ⋙ G) ⟹ (F ⋙ H) := {
+    app a := η.app (F.obj a)
+    naturality f := η.naturality (F.map f)
+  }
+
+def NatTrans.hcomp {A : Type u} {B : Type u'} {C : Type u''}
+  [Category.{v} A] [Category.{v'} B] [Category.{v''} C]
+  {F₁ F₂ : A ⥤ B} (η : F₁ ⟹ F₂)
+  {G₁ G₂ : B ⥤ C} (θ : G₁ ⟹ G₂)
+: (F₁ ⋙ G₁) ⟹ (F₂ ⋙ G₂) := {
+  app a := θ.app (F₁.obj a) ≫ G₂.map (η.app a)
+  naturality f := by {
+    rw [Functor.comp_map, ← θ.naturality, ← Category.comp_assoc, ← G₁.map_comp, θ.naturality]
+    simp
+  }
+}
+
 @[ext 9000, grind ext]
 theorem NatTrans.ext {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
   {F G : C ⥤ D} {η θ : F ⟹ G} (h : ∀ x : C, η.app x = θ.app x)
@@ -130,7 +172,6 @@ instance Category.Fun (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'}
   id_comp _ := by ext; rw [NatTrans.vcomp_app, NatTrans.id_app, Category.id_comp]
   comp_id _ := by ext; rw [NatTrans.vcomp_app, NatTrans.id_app, Category.comp_id]
   comp_assoc _ _ _ := by ext; rw [NatTrans.vcomp_app, NatTrans.vcomp_app, NatTrans.vcomp_app, NatTrans.vcomp_app, Category.comp_assoc]
-#print axioms Category.Fun
 
 @[simp, grind =]
 theorem Category.Fun_hom {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
