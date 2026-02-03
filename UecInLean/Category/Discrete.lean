@@ -20,6 +20,17 @@ instance (α : Type u) : Category.{v} (Discrete α) where
 instance {α : Type u} {x y : Discrete α} : Subsingleton (x ⟶ y) where
   allEq := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl -- by proof irrelevance
 
+theorem Discrete.eq_of_hom {α : Type u} {x y : Discrete α} : x ⟶ y → x = y := by
+  intro ⟨⟨h⟩⟩; exact h
+
+theorem Discrete.id_def {α : Type u} {x : Discrete α} : ULift.up (PLift.up (Eq.refl x)) = 𝟙 x := by rfl
+
+theorem Discrete.hom_eq {α : Type u} {x y : Discrete α} (h : x = y) (f : x ⟶ y) : ULift.up (PLift.up h) = f := by {
+  subst h
+  obtain ⟨⟨f⟩⟩ := f
+  rfl
+}
+
 -- 離散圏とみなしていたことを忘れる関手
 def Discrete.forget {α : Type u} [Category.{v} α] : Discrete α ⥤ α where
   obj x := x.as
