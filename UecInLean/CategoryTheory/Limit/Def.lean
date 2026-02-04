@@ -1,9 +1,6 @@
-import UecInLean.Category.Basic
-import UecInLean.Category.Discrete
+import UecInLean.CategoryTheory.Category.Discrete
 
-
-
-namespace UecInLean.Limit
+namespace UecInLean.CategoryTheory.Limit
 
 universe v v' u u'
 variable {C : Type u} [Category.{v} C] {J : Type u'} [Category.{v'} J]
@@ -59,7 +56,3 @@ def ProductCone {a b : C} (p : C) (π1 : p ⟶ a) (π2 : p ⟶ b) : Cone (Produc
 
 class HasProduct (a b : C) extends HasLimit (ProductFunctor a b)
 
-
-end Product
-
-end UecInLean.Limit

@@ -1,12 +1,14 @@
-import UecInLean.Category.Basic
+import UecInLean.CategoryTheory.Category.Def
+import UecInLean.CategoryTheory.Functor.Def
 
-namespace UecInLean
+namespace UecInLean.CategoryTheory
 
 universe v v₀ u u₀
 
 structure Discrete (α : Type u) where
   as : α
 
+@[simp]
 theorem Discrete.mk_as {α : Type u} (a : α) : (Discrete.mk a).as = a := rfl
 
 instance (α : Type u) : Category.{v} (Discrete α) where
@@ -20,11 +22,14 @@ instance (α : Type u) : Category.{v} (Discrete α) where
 instance {α : Type u} {x y : Discrete α} : Subsingleton (x ⟶ y) where
   allEq := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl -- by proof irrelevance
 
+@[simp]
 theorem Discrete.eq_of_hom {α : Type u} {x y : Discrete α} : x ⟶ y → x = y := by
   intro ⟨⟨h⟩⟩; exact h
 
+@[simp]
 theorem Discrete.id_def {α : Type u} {x : Discrete α} : ULift.up (PLift.up (Eq.refl x)) = 𝟙 x := by rfl
 
+@[simp]
 theorem Discrete.hom_eq {α : Type u} {x y : Discrete α} (h : x = y) (f : x ⟶ y) : ULift.up (PLift.up h) = f := by {
   subst h
   obtain ⟨⟨f⟩⟩ := f
@@ -32,7 +37,7 @@ theorem Discrete.hom_eq {α : Type u} {x y : Discrete α} (h : x = y) (f : x ⟶
 }
 
 -- 離散圏とみなしていたことを忘れる関手
-def Discrete.forget {α : Type u} [Category.{v} α] : Discrete α ⥤ α where
+def Discrete.forget {C : Type u} [Category.{v} C] : Discrete C ⥤ C where
   obj x := x.as
   map := fun ⟨⟨h⟩⟩ => by cases h; exact 𝟙 (as _)
   map_id x := rfl
@@ -46,5 +51,3 @@ def Discrete.functor {I : Type u₀} {C : Type u} [Category.{v} C] (f : I → C)
 }
 
 abbrev DiscN (n : Nat) := Discrete (Fin n)
-
-end UecInLean
