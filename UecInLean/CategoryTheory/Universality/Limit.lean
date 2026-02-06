@@ -18,22 +18,6 @@ class HasLimit (F : J ⥤ C) where
 
 namespace Product
 
-inductive Span : Type u
-  | l | r
-inductive Span_hom : Span → Span → Type v
-  | id (o : Span) : Span_hom o o
-instance : Category Span where
-  hom := Span_hom
-  id := Span_hom.id
-  comp f g := by cases f; exact g
-  comp_id
-    | .id _ => by rfl
-  id_comp
-    | .id _ => by rfl
-  comp_assoc f g h := by {
-    cases f <;> cases g <;> cases h <;> rfl
-  }
-
 def ProductFunctor (a b : C) : Discrete (Fin 2) ⥤ C where
   obj
     | ⟨0⟩ => a
@@ -56,3 +40,6 @@ def ProductCone {a b : C} (p : C) (π1 : p ⟶ a) (π2 : p ⟶ b) : Cone (Produc
 
 class HasProduct (a b : C) extends HasLimit (ProductFunctor a b)
 
+example (a b : C) [h : HasProduct a b] : ∃ p, ∃ _ : p ⟶ a, True := by {
+  exact ⟨h.lim.pt, h.lim.π ⟨0⟩, trivial⟩
+}

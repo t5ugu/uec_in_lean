@@ -1,9 +1,9 @@
 import UecInLean.CategoryTheory.Category.Def
 
-namespace UecInLean.CategoryTheory
+namespace UecInLean.CategoryTheory.Category
 universe u
 
-instance Category.Set : Category.{u} (Type u) where
+instance Set : Category.{u} (Type u) where
   hom A B := A → B
   id _ := _root_.id
   comp f g := fun x => g (f x)
@@ -12,8 +12,8 @@ instance Category.Set : Category.{u} (Type u) where
   comp_assoc f g h := by rfl
 
 @[simp, grind =]
-theorem Category.Set_hom {A B : Type u} : A ⟶ B = (A → B) := rfl
+theorem Set.hom_def {A B : Type u} : A ⟶ B = (A → B) := rfl
 @[simp, grind =]
-theorem Category.Set_id {A : Type u} : 𝟙 A = _root_.id := rfl
+theorem Set.id_def {A : Type u} : 𝟙 A = _root_.id := rfl
 @[simp, grind =]
-theorem Category.Set_comp {A B C : Type u} (f : A ⟶ B) (g : B ⟶ C) : f ≫ g = fun x => g (f x) := rfl
+theorem Set.comp_def {A B C : Type u} (f : A ⟶ B) (g : B ⟶ C) : f ≫ g = fun x => g (f x) := rfl

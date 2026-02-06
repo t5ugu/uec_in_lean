@@ -1,6 +1,6 @@
 import UecInLean.CategoryTheory.Category.Def
 
-namespace UecInLean.CategoryTheory
+namespace UecInLean.CategoryTheory.Category
 
 universe v v' u u'
 
@@ -18,7 +18,7 @@ theorem unop_op (x : α) : unop (op x) = x := rfl
 
 end Opposite
 
-instance Category.Opposite {C : Type u} [Category.{v} C] : Category.{v} Cᵒᵖ where
+instance {C : Type u} [Category.{v} C] : Category.{v} Cᵒᵖ where
   hom X Y := Y.unop ⟶ X.unop
   id X := 𝟙 X.unop
   comp f g := g ≫ f
@@ -27,9 +27,9 @@ instance Category.Opposite {C : Type u} [Category.{v} C] : Category.{v} Cᵒᵖ 
   comp_assoc f g h := by rw [Category.comp_assoc h g f]
 
 @[simp, grind =]
-theorem Category.Opposite_hom {C : Type u} [Category C] {X Y : Cᵒᵖ} : X ⟶ Y = Y.unop ⟶ X.unop := rfl
+theorem Opposite.hom_def {C : Type u} [Category C] {X Y : Cᵒᵖ} : X ⟶ Y = Y.unop ⟶ X.unop := rfl
 @[simp, grind =]
-theorem Category.Opposite_id {C : Type u} [Category C] (X : C) : @CategoryStruct.id Cᵒᵖ _ ⟨X⟩ = 𝟙 X := rfl
+theorem Opposite.id_def {C : Type u} [Category C] (X : C) : @CategoryStruct.id Cᵒᵖ _ ⟨X⟩ = 𝟙 X := rfl
 @[simp, grind =]
-theorem Category.Opposite_comp {C : Type u} [Category C]
+theorem Opposite.comp_def {C : Type u} [Category C]
   {X Y Z : Cᵒᵖ} (f : X ⟶ Y) (g : Y ⟶ Z) : f ≫ g = @CategoryStruct.comp C _ _ _ _ g f := rfl

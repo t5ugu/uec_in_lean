@@ -1,21 +1,21 @@
 import UecInLean.CategoryTheory.Functor.Def
 
-namespace UecInLean.CategoryTheory
+namespace UecInLean.CategoryTheory.Category
 
 universe v₀ v₁ v u₀ u₁ u
 variable {C₀ : Type u₀} [Category.{v₀} C₀] {C₁ : Type u₁} [Category.{v₁} C₁] {D : Type u} [Category.{v} D]
 
-structure Comma.Struct (F : C₀ ⥤ D) (G : C₁ ⥤ D) where
+structure Comma (F : C₀ ⥤ D) (G : C₁ ⥤ D) where
   c₀ : C₀
   c₁ : C₁
   f : F.obj c₀ ⟶ G.obj c₁
 
-structure Comma.Hom {F : C₀ ⥤ D} {G : C₁ ⥤ D} (X Y : Comma.Struct F G) where
+structure Comma.Hom {F : C₀ ⥤ D} {G : C₁ ⥤ D} (X Y : Comma F G) where
   g₀ : X.c₀ ⟶ Y.c₀
   g₁ : X.c₁ ⟶ Y.c₁
   comm : F.map g₀ ≫ Y.f = X.f ≫ G.map g₁
 
-instance Category.Comma {F : C₀ ⥤ D} {G : C₁ ⥤ D} : Category (Comma.Struct F G) where
+instance {F : C₀ ⥤ D} {G : C₁ ⥤ D} : Category (Comma F G) where
   hom := Comma.Hom
   id _ := ⟨𝟙 _, 𝟙 _, by simp⟩
   comp := by {
@@ -29,4 +29,4 @@ instance Category.Comma {F : C₀ ⥤ D} {G : C₁ ⥤ D} : Category (Comma.Stru
   id_comp _ := by simp
   comp_assoc _ _ _ := by simp
 
-infix:max " ↓ " => Comma.Struct
+infix:max " ↓ " => Comma

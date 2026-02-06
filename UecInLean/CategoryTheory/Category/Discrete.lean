@@ -1,7 +1,7 @@
 import UecInLean.CategoryTheory.Category.Def
 import UecInLean.CategoryTheory.Functor.Def
 
-namespace UecInLean.CategoryTheory
+namespace UecInLean.CategoryTheory.Category
 
 universe v v₀ u u₀
 
