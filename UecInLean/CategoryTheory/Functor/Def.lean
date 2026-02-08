@@ -70,3 +70,18 @@ theorem map_inj_iff (F : C ⥤ D) [Faithful F] {x y : C} {f g : x ⟶ y} : F.map
 class FullyFaithful (F : C ⥤ D) extends Full F, Faithful F
 noncomputable def pull (F : C ⥤ D) [FullyFaithful F] {x y : C} (f : F.obj x ⟶ F.obj y) : x ⟶ y := Classical.choose (map_surj F f)
 theorem map_pull (F : C ⥤ D) [FullyFaithful F] {x y : C} (f : F.obj x ⟶ F.obj y) : F.map (pull F f) = f := Classical.choose_spec (map_surj F f)
+
+
+theorem eq_id_iff {F : C ⥤ C} (h_obj : ∀ x, F.obj x = x) (h_map : ∀ {x y : C} (f : x ⟶ y), F.map f = Category.eq_to_hom (h_obj x) ≫ f ≫ Category.eq_to_hom (h_obj y).symm) : F = id C := by {
+  obtain ⟨obj, map⟩ := F
+  rw [← funext_iff] at h_obj
+  subst h_obj
+  simp only [Category.eq_to_hom_refl, Category.comp_id, Category.id_comp] at h_map
+  congr
+  funext x y f
+  exact h_map f
+}
+
+end Functor
+
+end UecInLean.CategoryTheory

@@ -29,4 +29,16 @@ instance {F : C₀ ⥤ D} {G : C₁ ⥤ D} : Category (Comma F G) where
   id_comp _ := by simp
   comp_assoc _ _ _ := by simp
 
-infix:max " ↓ " => Comma
+@[simp]
+theorem Comma.id_def {F : C₀ ⥤ D} {G : C₁ ⥤ D} (X : Comma F G) :
+  𝟙 X = ⟨𝟙 X.c₀, 𝟙 X.c₁, by simp⟩ := by rfl
+
+@[simp]
+theorem Comma.comp_def {F : C₀ ⥤ D} {G : C₁ ⥤ D}
+  {X Y Z : Comma F G} (f : X ⟶ Y) (g : Y ⟶ Z) :
+  f ≫ g = ⟨f.g₀ ≫ g.g₀, f.g₁ ≫ g.g₁, by {
+    rw [Functor.map_comp, Category.comp_assoc, g.comm, ← Category.comp_assoc, f.comm, Functor.map_comp]
+    simp
+  }⟩ := by rfl
+
+infix:800 " ↓ " => Comma

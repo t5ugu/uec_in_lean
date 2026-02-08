@@ -28,6 +28,33 @@ def Category.eq_to_hom {C : Type u} [Category.{v} C] {x y : C} (h : x = y) : x �
   exact 𝟙 x
 }
 
+theorem Category.eq_to_hom_refl {C : Type u} [Category.{v} C] {x : C} :
+  Category.eq_to_hom (rfl : x = x) = 𝟙 x := by rfl
+
+attribute [simp] Category.eq_to_hom_refl
+
+@[simp]
+theorem Category.eq_to_hom_trans {C : Type u} [Category.{v} C] {x y z : C}
+  (h₁ : x = y) (h₂ : y = z) :
+  Category.eq_to_hom (h₁.trans h₂) = Category.eq_to_hom h₁ ≫ Category.eq_to_hom h₂ := by
+  cases h₁
+  cases h₂
+  simp [Category.eq_to_hom]
+
+@[simp]
+theorem Category.eq_to_hom_comp {C : Type u} [Category.{v} C] {x y z : C}
+  (h : x = y) (f : y ⟶ z) :
+  Category.eq_to_hom h ≫ f = h ▸ f := by
+  cases h
+  simp [Category.eq_to_hom]
+
+@[simp]
+theorem Category.comp_eq_to_hom {C : Type u} [Category.{v} C] {x y z : C}
+  (f : x ⟶ y) (h : y = z) :
+  f ≫ Category.eq_to_hom h = h ▸ f := by
+  cases h
+  simp [Category.eq_to_hom]
+
 theorem Category.comp_congr_left {C : Type u} [Category.{v} C] {x y z : C}
   {f₁ f₂ : x ⟶ y} (hf : f₁ = f₂) (g : y ⟶ z) :
   f₁ ≫ g = f₂ ≫ g := by {

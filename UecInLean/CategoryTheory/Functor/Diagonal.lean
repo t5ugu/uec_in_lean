@@ -1,7 +1,7 @@
 import UecInLean.CategoryTheory.Functor.Def
 import UecInLean.CategoryTheory.Category.Functor
 
-namespace UecInLean.CategoryTheory
+namespace UecInLean.CategoryTheory.Functor
 
 universe v v' u u'
 variable {C : Type u} [Category.{v} C] {J : Type u'} [Category.{v'} J]

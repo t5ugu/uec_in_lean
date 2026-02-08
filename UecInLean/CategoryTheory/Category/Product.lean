@@ -4,7 +4,7 @@ namespace UecInLean.CategoryTheory.Category
 
 universe v v' u u'
 
-instance Product {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D] : Category (C × D) where
+instance {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D] : Category (C × D) where
   hom X Y := (X.1 ⟶ Y.1) × (X.2 ⟶ Y.2)
   id X := (𝟙 X.1, 𝟙 X.2)
   comp f g := (f.1 ≫ g.1, f.2 ≫ g.2)
