@@ -10,7 +10,7 @@ variable {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D] {E : Type
 noncomputable def NaturalIso.mk {F G : C ⥤ D} (α : F ⟹ G) (h : ∀ x, IsIso (α.app x)) : F ≅ G := by {
   apply Iso.mk α _ _ _
   {
-    rw [Category.Functor_hom]
+    rw [Category.Functor.hom_def]
     exact ⟨by {
       intro x
       exact Classical.choose (h x).iso
@@ -25,7 +25,7 @@ noncomputable def NaturalIso.mk {F G : C ⥤ D} (α : F ⟹ G) (h : ∀ x, IsIso
     }⟩
   }
   {
-    rw [Category.Functor_id, Category.Functor_comp]
+    rw [Category.Functor.id_def, Category.Functor.comp_def]
     apply NatTrans.ext
     intro c
     rw [NatTrans.id_app]
@@ -33,7 +33,7 @@ noncomputable def NaturalIso.mk {F G : C ⥤ D} (α : F ⟹ G) (h : ∀ x, IsIso
     exact (Classical.choose_spec (h c).iso).1
   }
   {
-    rw [Category.Functor_id, Category.Functor_comp]
+    rw [Category.Functor.id_def, Category.Functor.comp_def]
     apply NatTrans.ext
     intro c
     rw [NatTrans.id_app]
@@ -52,17 +52,17 @@ def NaturalIso.ofComponents {F G : C ⥤ D} (appiso : ∀ x, F.obj x ≅ G.obj x
 }) (by {
   apply NatTrans.ext
   intro c
-  rw [Category.Functor_id_app, Category.Functor_comp_app, Iso.hom_inv_id]
+  rw [Category.Functor.id_app, Category.Functor.comp_app, Iso.hom_inv_id]
 }) (by {
   apply NatTrans.ext
   intro c
-  rw [Category.Functor_id_app, Category.Functor_comp_app, Iso.inv_hom_id]
+  rw [Category.Functor.id_app, Category.Functor.comp_app, Iso.inv_hom_id]
 })
 
 def obj {F G : C ⥤ D} (α : F ≅ G) (c : C) : F.obj c ≅ G.obj c := Iso.mk (α.hom.app c) (α.inv.app c) (by {
-  rw [← NatTrans.vcomp_app, ← Category.Functor_comp, α.hom_inv_id, Category.Functor_id, NatTrans.id_app]
+  rw [← NatTrans.vcomp_app, ← Category.Functor.comp_def, α.hom_inv_id, Category.Functor.id_def, NatTrans.id_app]
 }) (by {
-  rw [← NatTrans.vcomp_app, ← Category.Functor_comp, α.inv_hom_id, Category.Functor_id, NatTrans.id_app]
+  rw [← NatTrans.vcomp_app, ← Category.Functor.comp_def, α.inv_hom_id, Category.Functor.id_def, NatTrans.id_app]
 })
 
 @[simp]
@@ -141,13 +141,13 @@ def NaturalIso.comp_congr_right {F₁ F₂ : C ⥤ D} (α : F₁ ≅ F₂) (G : 
   hom_inv_id := by {
     apply NatTrans.ext
     intro c
-    simp only [NatTrans.whiskerLeft, hom_app, inv_app, Category.Functor_comp, NatTrans.vcomp_app, Category.Functor_id, NatTrans.id_app, Functor.comp_obj]
+    simp only [NatTrans.whiskerLeft, hom_app, inv_app, Category.Functor.comp_def, NatTrans.vcomp_app, Category.Functor.id_def, NatTrans.id_app, Functor.comp_obj]
     rw [← G.map_comp, (α.obj c).hom_inv_id, G.map_id]
   }
   inv_hom_id := by {
     apply NatTrans.ext
     intro c
-    simp only [NatTrans.whiskerLeft, hom_app, inv_app, Category.Functor_comp, NatTrans.vcomp_app, Category.Functor_id, NatTrans.id_app, Functor.comp_obj]
+    simp only [NatTrans.whiskerLeft, hom_app, inv_app, Category.Functor.comp_def, NatTrans.vcomp_app, Category.Functor.id_def, NatTrans.id_app, Functor.comp_obj]
     rw [← G.map_comp, (α.obj c).inv_hom_id, G.map_id]
     }
 }
@@ -159,13 +159,13 @@ def NaturalIso.comp_congr_left (F : C ⥤ D) {G₁ G₂ : D ⥤ E} (α : G₁ �
   hom_inv_id := by {
     apply NatTrans.ext
     intro c
-    simp only [NatTrans.whiskerRight, hom_app, inv_app, Category.Functor_comp, NatTrans.vcomp_app, Category.Functor_id, NatTrans.id_app, Functor.comp_obj]
+    simp only [NatTrans.whiskerRight, hom_app, inv_app, Category.Functor.comp_def, NatTrans.vcomp_app, Category.Functor.id_def, NatTrans.id_app, Functor.comp_obj]
     rw [← (α.obj (F.obj c)).hom_inv_id]
   }
   inv_hom_id := by {
     apply NatTrans.ext
     intro c
-    simp only [NatTrans.whiskerRight, hom_app, inv_app, Category.Functor_comp, NatTrans.vcomp_app, Category.Functor_id, NatTrans.id_app, Functor.comp_obj]
+    simp only [NatTrans.whiskerRight, hom_app, inv_app, Category.Functor.comp_def, NatTrans.vcomp_app, Category.Functor.id_def, NatTrans.id_app, Functor.comp_obj]
     rw [← (α.obj (F.obj c)).inv_hom_id]
   }
 }
