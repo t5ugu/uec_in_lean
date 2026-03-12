@@ -10,7 +10,7 @@ structure Cat where
   inst : Category.{v} cat
 
 instance (C : Cat) : Category.{v} C.cat := C.inst
-instance : Coe Cat (Type u) := ⟨fun C => C.cat⟩
+instance : CoeSort Cat (Type u) := ⟨Cat.cat⟩
 
 instance : Category Cat where
   hom C D := C ⥤ D

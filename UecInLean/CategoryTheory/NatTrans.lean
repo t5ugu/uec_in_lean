@@ -17,57 +17,58 @@ attribute [simp, grind =] NatTrans.naturality
 
 namespace NatTrans
 
-def id {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  (F : C ⥤ D) : F ⟹ F where
+variable {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D] {E : Type u''} [Category.{v''} E] {A : Type u₀} [Category.{v₀} A] {B : Type u₁} [Category.{v₁} B]
+
+def id (F : C ⥤ D) : F ⟹ F where
     app x := 𝟙 (F.obj x)
     naturality f := by rw [Category.comp_id, Category.id_comp]
 
-@[simp, grind =]
-theorem id_app {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  (F : C ⥤ D) (x : C)
+@[simp]
+theorem id_app (F : C ⥤ D) (x : C)
 : (NatTrans.id F).app x = 𝟙 (F.obj x) := rfl
 
-def vcomp {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H)
+def vcomp {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H)
 : F ⟹ H where
   app x := η.app x ≫ θ.app x
   naturality f := by rw [← Category.comp_assoc, η.naturality f, Category.comp_assoc, θ.naturality f, ← Category.comp_assoc]
 
-@[simp, grind =]
-theorem vcomp_app {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
-  {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H) (x : C)
+@[simp]
+theorem vcomp_app {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H) (x : C)
 : (vcomp η θ).app x = η.app x ≫ θ.app x := rfl
 
-def whiskering {A : Type u₀} {C : Type u} {D : Type u'} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v'} D] [Category.{v₁} B]
-  (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) : (F ⋙ G ⋙ I) ⟹ (F ⋙ H ⋙ I) := {
+def whiskering (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) : (F ⋙ G ⋙ I) ⟹ (F ⋙ H ⋙ I) := {
     app a := I.map (η.app (F.obj a))
     naturality f := by {
       simp only [Functor.comp_map, ← I.map_comp]
-      apply I.map_congrArg
-      exact η.naturality (F.map f)
+      exact I.congrArg_map <| η.naturality (F.map f)
     }
   }
 
-def whiskerLeft {A : Type u₀} {C : Type u} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v₁} B]
-  {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : (F ⋙ H) ⟹ (G ⋙ H) := {
+@[simp]
+theorem whiskering_app (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) (a : A) : (whiskering F η I).app a = I.map (η.app (F.obj a)) := rfl
+
+def whiskerLeft {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : (F ⋙ H) ⟹ (G ⋙ H) := {
     app a := H.map (η.app a)
     naturality f := by {
       simp only [Functor.comp_map, ← H.map_comp]
-      apply H.map_congrArg
-      exact η.naturality f
+      exact H.congrArg_map <| η.naturality f
     }
   }
 
-def whiskerRight {A : Type u₀} {C : Type u} {B : Type u₁} [Category.{v₀} A] [Category.{v} C] [Category.{v₁} B]
-  (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) : (F ⋙ G) ⟹ (F ⋙ H) := {
+@[simp]
+theorem whiskerLeft_app {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) (a : A)
+: (whiskerLeft η H).app a = H.map (η.app a) := rfl
+
+def whiskerRight (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) : (F ⋙ G) ⟹ (F ⋙ H) := {
     app a := η.app (F.obj a)
     naturality f := η.naturality (F.map f)
   }
 
-def hcomp {A : Type u} {B : Type u'} {C : Type u''}
-  [Category.{v} A] [Category.{v'} B] [Category.{v''} C]
-  {F₁ F₂ : A ⥤ B} (η : F₁ ⟹ F₂)
-  {G₁ G₂ : B ⥤ C} (θ : G₁ ⟹ G₂)
+@[simp]
+theorem whiskerRight_app (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (a : A)
+: (whiskerRight F η).app a = η.app (F.obj a) := rfl
+
+def hcomp {F₁ F₂ : A ⥤ B} (η : F₁ ⟹ F₂) {G₁ G₂ : B ⥤ C} (θ : G₁ ⟹ G₂)
 : (F₁ ⋙ G₁) ⟹ (F₂ ⋙ G₂) := {
   app a := θ.app (F₁.obj a) ≫ G₂.map (η.app a)
   naturality f := by {
@@ -76,6 +77,7 @@ def hcomp {A : Type u} {B : Type u'} {C : Type u''}
   }
 }
 
+@[simp]
 theorem hcomp_app {A : Type u} {B : Type u'} {C : Type u''}
   [Category.{v} A] [Category.{v'} B] [Category.{v''} C]
   {F₁ F₂ : A ⥤ B} (η : F₁ ⟹ F₂)
@@ -91,3 +93,9 @@ theorem ext {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
   congr
   exact funext h
 }
+
+theorem whiskerLeft_eq_whiskering {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : whiskerLeft η H = whiskering (.id A) η H := by ext <;> simp
+
+theorem whiskerRight_eq_whiskering {G H : B ⥤ C} (η : G ⟹ H) (F : A ⥤ B) : whiskerRight F η = whiskering F η (.id C) := by ext <;> simp
+
+end NatTrans

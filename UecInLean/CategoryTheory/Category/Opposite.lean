@@ -26,10 +26,10 @@ instance {C : Type u} [Category.{v} C] : Category.{v} Cᵒᵖ where
   comp_id := Category.id_comp
   comp_assoc f g h := by rw [Category.comp_assoc h g f]
 
-@[simp, grind =]
+@[simp]
 theorem Opposite.hom_def {C : Type u} [Category C] {X Y : Cᵒᵖ} : X ⟶ Y = Y.unop ⟶ X.unop := rfl
-@[simp, grind =]
+@[simp]
 theorem Opposite.id_def {C : Type u} [Category C] (X : C) : @CategoryStruct.id Cᵒᵖ _ ⟨X⟩ = 𝟙 X := rfl
-@[simp, grind =]
+@[simp]
 theorem Opposite.comp_def {C : Type u} [Category C]
   {X Y Z : Cᵒᵖ} (f : X ⟶ Y) (g : Y ⟶ Z) : f ≫ g = @CategoryStruct.comp C _ _ _ _ g f := rfl

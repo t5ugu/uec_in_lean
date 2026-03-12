@@ -15,17 +15,17 @@ def Yoneda_lemma {C : Type u} [Category.{max u v} C] (a : C) (P : C ⥤ Type (ma
     app s f := (P.map f) x
     naturality {s t} f := by {
       funext g
-      exact Functor.toSet_map_comp P g f x
+      exact P.toSet_map_comp g f x
     }
   }
   hom_inv_id := by {
     funext θ
-    apply NatTrans.ext
-    intro s
+    simp only [Category.Functor.hom_def]; ext s
     funext f
     have h := congrArg (fun k => k (𝟙 a)) (θ.naturality f)
     simpa [Hom] using h.symm
   }
+  inv_hom_id := by simp
 }
 
 def Hom_inj {C : Type u} [Category.{v} C] {a b : C} (h : Hom a ≅ Hom b) : a ≅ b := {

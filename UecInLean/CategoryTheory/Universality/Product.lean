@@ -57,15 +57,10 @@ class HasProduct (C : Type u) [Category.{v} C] where
   isProd (a b : C) : (prod a b).isLimit
 infixr:1000 " ⨯ " => HasProduct.prod
 
-def Product.universality {C : Type u} [Category.{v} C] [HasProduct C] {a b : C} (q : Product a b) : Unique (q ⟶ a ⨯ b) :=
-  HasProduct.isProd a b q
-
-def Product.univHom {C : Type u} [Category.{v} C] [HasProduct C] {a b : C} (q : Product a b) : q ⟶ a ⨯ b := q.universality.default
+def Product.univHom {C : Type u} [Category.{v} C] [HasProduct C] {a b : C} (q : Product a b) : q ⟶ a ⨯ b := (HasProduct.isProd a b).default q
 
 theorem Product.univHom_self_eq_id {C : Type u} [Category.{v} C] [HasProduct C] {a b : C} :
-  (a ⨯ b).univHom = 𝟙 (a ⨯ b) := by {
-  apply (a ⨯ b).universality.allEq
-}
+  (a ⨯ b).univHom = 𝟙 (a ⨯ b) := (HasProduct.isProd a b).allEq _ _
 
 /-- 余直積対象のなす圏。その始対象が余直積。 ⨿ (`\coprod`) -/
 def Coproduct (a b : C) := Product (⟨a⟩ : Cᵒᵖ) (⟨b⟩ : Cᵒᵖ)

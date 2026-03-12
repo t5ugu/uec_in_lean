@@ -11,58 +11,54 @@ class CategoryStruct (C : Type u) where
   id (x : C) : hom x x
   comp {x y z : C} : hom x y → hom y z → hom x z
 
-class Category (C : Type u) extends CategoryStruct.{v} C where
-  id_comp {x y : C} (f : hom x y) : comp (id x) f = f := by grind
-  comp_id {x y : C} (f : hom x y) : comp f (id y) = f := by grind
-  comp_assoc {w x y z : C} (f : hom x y) (g : hom y z) (h : hom z w) :
-    comp (comp f g) h = comp f (comp g h) := by grind
-
 infixr:80 " ⟶ " => CategoryStruct.hom
 prefix:100 "𝟙 " => CategoryStruct.id
 infixr:90 " ≫ " => CategoryStruct.comp
 
-attribute [simp, grind =] Category.id_comp Category.comp_id Category.comp_assoc
+class Category (C : Type u) extends CategoryStruct.{v} C where
+  id_comp {x y : C} (f : x ⟶ y) : 𝟙 x ≫ f = f
+  comp_id {x y : C} (f : x ⟶ y) : f ≫ 𝟙 y = f
+  comp_assoc {w x y z : C} (f : x ⟶ y) (g : y ⟶ z) (h : z ⟶ w) :
+    (f ≫ g) ≫ h = f ≫ (g ≫ h)
 
-def Category.eq_to_hom {C : Type u} [Category.{v} C] {x y : C} (h : x = y) : x ⟶ y := by {
-  cases h
-  exact 𝟙 x
-}
+namespace Category
 
-theorem Category.eq_to_hom_refl {C : Type u} [Category.{v} C] {x : C} :
-  Category.eq_to_hom (rfl : x = x) = 𝟙 x := by rfl
+attribute [simp, grind =] id_comp comp_id comp_assoc
 
-attribute [simp] Category.eq_to_hom_refl
+def eq_to_hom {C : Type u} [Category.{v} C] {x y : C} (h : x = y) : x ⟶ y := h ▸ 𝟙 x
+
+@[simp, grind =]
+theorem eq_to_hom_refl {C : Type u} [Category.{v} C] {x : C} : eq_to_hom (rfl : x = x) = 𝟙 x := by rfl
 
 @[simp]
-theorem Category.eq_to_hom_trans {C : Type u} [Category.{v} C] {x y z : C}
+theorem eq_to_hom_trans {C : Type u} [Category.{v} C] {x y z : C}
   (h₁ : x = y) (h₂ : y = z) :
-  Category.eq_to_hom (h₁.trans h₂) = Category.eq_to_hom h₁ ≫ Category.eq_to_hom h₂ := by
-  cases h₁
-  cases h₂
-  simp [Category.eq_to_hom]
+  eq_to_hom (h₁.trans h₂) = eq_to_hom h₁ ≫ eq_to_hom h₂ := by
+  subst h₁; subst h₂; simp
 
 @[simp]
-theorem Category.eq_to_hom_comp {C : Type u} [Category.{v} C] {x y z : C}
+theorem eq_to_hom_comp {C : Type u} [Category.{v} C] {x y z : C}
   (h : x = y) (f : y ⟶ z) :
-  Category.eq_to_hom h ≫ f = h ▸ f := by
-  cases h
-  simp [Category.eq_to_hom]
+  eq_to_hom h ≫ f = h ▸ f := by
+  cases h; simp [eq_to_hom]
 
 @[simp]
-theorem Category.comp_eq_to_hom {C : Type u} [Category.{v} C] {x y z : C}
+theorem comp_eq_to_hom {C : Type u} [Category.{v} C] {x y z : C}
   (f : x ⟶ y) (h : y = z) :
-  f ≫ Category.eq_to_hom h = h ▸ f := by
-  cases h
-  simp [Category.eq_to_hom]
+  f ≫ eq_to_hom h = h ▸ f := by
+  cases h; simp [eq_to_hom]
 
-theorem Category.comp_congr_left {C : Type u} [Category.{v} C] {x y z : C}
+@[grind .]
+theorem congr_comp {C : Type u} [Category.{v} C] {x y z : C}
+  {f₁ f₂ : x ⟶ y} (hf : f₁ = f₂) {g₁ g₂ : y ⟶ z} (hg : g₁ = g₂) :
+  f₁ ≫ g₁ = f₂ ≫ g₂ := by rw [hf, hg]
+
+@[grind .]
+theorem congr_comp_left {C : Type u} [Category.{v} C] {x y z : C}
   {f₁ f₂ : x ⟶ y} (hf : f₁ = f₂) (g : y ⟶ z) :
-  f₁ ≫ g = f₂ ≫ g := by {
-  rw [hf]
-}
+  f₁ ≫ g = f₂ ≫ g := congr_comp hf rfl
 
-theorem Category.comp_congr_right {C : Type u} [Category.{v} C] {x y z : C}
+@[grind .]
+theorem congr_comp_right {C : Type u} [Category.{v} C] {x y z : C}
   (f : x ⟶ y) {g₁ g₂ : y ⟶ z} (hg : g₁ = g₂) :
-  f ≫ g₁ = f ≫ g₂ := by {
-  rw [hg]
-}
+  f ≫ g₁ = f ≫ g₂ := congr_comp rfl hg

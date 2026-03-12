@@ -21,17 +21,17 @@ instance {c : C} : Category (Slice c) where
     intro _ _ _ ⟨f, comm⟩ ⟨g, comm'⟩
     exact ⟨f ≫ g, by rw [Category.comp_assoc, comm', comm]⟩
   }
-  comp_id _ := by simp
-  id_comp _ := by simp
-  comp_assoc _ _ _ := by simp
+  comp_id := by simp
+  id_comp := by simp
+  comp_assoc := by simp
 
-instance {c : Cᵒᵖ} : Category (Slice c) where
+instance instCoslice {c : Cᵒᵖ} : Category (Slice c) where
   hom := Slice.Hom
   id X := ⟨𝟙 _, by simp⟩
   comp := by {
     intro _ _ _ ⟨f, comm⟩ ⟨g, comm'⟩
     exact ⟨f ≫ g, by rw [Category.comp_assoc, comm', comm]⟩
   }
-  comp_id _ := by simp
-  id_comp _ := by simp
-  comp_assoc _ _ _ := by simp
+  comp_id := by simp
+  id_comp := by simp
+  comp_assoc := by simp

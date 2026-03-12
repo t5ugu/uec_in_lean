@@ -1,5 +1,4 @@
-import UecInLean.CategoryTheory.Category.Set
-import UecInLean.CategoryTheory.Functor.Def
+import UecInLean.CategoryTheory.Functor.toSet
 
 namespace UecInLean.CategoryTheory.Functor
 universe v u

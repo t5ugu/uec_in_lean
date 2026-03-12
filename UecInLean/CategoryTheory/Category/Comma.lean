@@ -25,9 +25,9 @@ instance {F : C₀ ⥤ D} {G : C₁ ⥤ D} : Category (Comma F G) where
       simp
     }⟩
   }
-  comp_id _ := by simp
-  id_comp _ := by simp
-  comp_assoc _ _ _ := by simp
+  comp_id := by simp
+  id_comp := by simp
+  comp_assoc := by simp
 
 @[simp]
 theorem Comma.id_def {F : C₀ ⥤ D} {G : C₁ ⥤ D} (X : Comma F G) :

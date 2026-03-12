@@ -20,7 +20,7 @@ instance (α : Type u) : Category.{v} (Discrete.{v} α) where
   comp_assoc := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl
 
 instance {α : Type u} {x y : Discrete α} : Subsingleton (x ⟶ y) where
-  allEq := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl -- by proof irrelevance
+  allEq := fun ⟨⟨_⟩⟩ ⟨⟨_⟩⟩ => rfl
 
 @[simp]
 theorem Discrete.eq_of_hom {α : Type u} {x y : Discrete α} : x ⟶ y → x = y := by
@@ -30,11 +30,6 @@ theorem Discrete.eq_of_hom {α : Type u} {x y : Discrete α} : x ⟶ y → x = y
 theorem Discrete.id_def {α : Type u} {x : Discrete α} : ULift.up (PLift.up (Eq.refl x)) = 𝟙 x := by rfl
 
 @[simp]
-theorem Discrete.hom_eq {α : Type u} {x y : Discrete α} (h : x = y) (f : x ⟶ y) : ULift.up (PLift.up h) = f := by {
-  subst h
-  obtain ⟨⟨f⟩⟩ := f
-  rfl
-}
+theorem Discrete.hom_eq {α : Type u} {x y : Discrete α} (h : x = y) : (f : x ⟶ y) → ULift.up (PLift.up h) = f := fun ⟨⟨_⟩⟩ => rfl
 
 abbrev DiscN (n : Nat) := Discrete.{0} (Fin n)
-
