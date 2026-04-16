@@ -1,4 +1,5 @@
 import UecInLean.CategoryTheory.Category.Functor
+import UecInLean.CategoryTheory.NatTrans.Whiskering
 
 namespace UecInLean.CategoryTheory.Functor
 
@@ -25,3 +26,10 @@ def Comp : (C ⥤ D) ⥤ (D ⥤ E) ⥤ (C ⥤ E) where
   map_id _ := by apply NatTrans.ext; intros; apply NatTrans.ext; simp
   map_comp _ _ := by apply NatTrans.ext; intros; apply NatTrans.ext; simp
 
+def compLeft (F : C ⥤ D) : (D ⥤ E) ⥤ (C ⥤ E) := Comp.obj F
+def compRight (G : D ⥤ E) : (C ⥤ D) ⥤ (C ⥤ E) := {
+  obj F := F ⋙ G
+  map α := NatTrans.whiskerLeft α G
+  map_id _ := by apply NatTrans.ext; simp
+  map_comp _ _ := by apply NatTrans.ext; simp
+}

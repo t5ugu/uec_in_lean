@@ -10,35 +10,43 @@ universe u v
 open Functor
 
 def Yoneda_lemma {C : Type u} [Category.{max u v} C] (a : C) (P : C ⥤ Type (max u v)) : (Hom a ⟶ P) ≅ P.obj a := {
-  hom θ := θ.app a (𝟙 a)
+  hom θ := θ.app a ⟨𝟙 a⟩
   inv x := {
-    app s f := (P.map f) x
+    app s f := (P.map f.down) x
     naturality {s t} f := by {
       funext g
-      exact P.toSet_map_comp g f x
+      exact P.toSet_map_comp g.down f x
     }
   }
   hom_inv_id := by {
     funext θ
     simp only [Category.Functor.hom_def]; ext s
     funext f
-    have h := congrArg (fun k => k (𝟙 a)) (θ.naturality f)
+    have h := congrArg (fun k => k ⟨𝟙 a⟩) (θ.naturality f.down)
     simpa [Hom] using h.symm
   }
   inv_hom_id := by simp
 }
 
+private theorem comp_Hom_map_app_cancel {C : Type u} [Category.{v} C] {a b : C} (F : ULift (a ⟶ a) → ULift (b ⟶ a)) (f : a ⟶ b) (g : a ⟶ a)
+  : (F ≫ (Hom b).map f) ⟨g⟩ = ⟨(F ⟨g⟩).down ≫ f⟩
+:= by simp
+
+theorem Hom_comp_app_id {C : Type u} [Category.{v} C] {a b : C} (F : ULift (a ⟶ b) → ULift (b ⟶ b)) (f : a ⟶ b)
+  : ((Hom a).map f ≫ F) ⟨𝟙 a⟩ = F ⟨f⟩
+:= by simp
+
 def Hom_inj {C : Type u} [Category.{v} C] {a b : C} (h : Hom a ≅ Hom b) : a ≅ b := {
-  hom := h.inv.app b (𝟙 b)
-  inv := h.hom.app a (𝟙 a)
+  hom := h.inv.app b ⟨𝟙 b⟩ |>.down
+  inv := h.hom.app a ⟨𝟙 a⟩ |>.down
   hom_inv_id := by {
-    have := congrFun (h.symm.naturality (h.hom.app a (𝟙 a))).symm (𝟙 b)
-    simp only [Category.Set.comp_app, Hom.map_def, Category.id_comp, symm_hom] at this
-    rw [this, ← Category.Set.comp_app (h.hom.app a) (h.inv.app a), h.hom_app_comp_inv_app, Category.Set.id_app]
+    have := congrFun (h.symm.naturality (h.hom.app a ⟨𝟙 a⟩).down).symm ⟨𝟙 b⟩
+    rw [symm_hom, comp_Hom_map_app_cancel, Hom_comp_app_id, ULift.up_down (h.hom.app a _), ← Category.Set.comp_app (h.hom.app a) (h.inv.app a), h.hom_app_comp_inv_app, Category.Set.id_app] at this
+    exact congrArg ULift.down this
   }
   inv_hom_id := by {
-    have := congrFun (h.naturality (h.inv.app b (𝟙 b))).symm (𝟙 a)
-    simp only [Category.Set.comp_app, Hom.map_def, Category.id_comp] at this
-    rw [this, ← Category.Set.comp_app (h.inv.app b) (h.hom.app b), h.inv_app_comp_hom_app, Category.Set.id_app]
+    have := congrFun (h.naturality (h.inv.app b ⟨𝟙 b⟩).down).symm ⟨𝟙 a⟩
+    rw [comp_Hom_map_app_cancel, Hom_comp_app_id, ULift.up_down (h.inv.app b _), ← Category.Set.comp_app (h.inv.app b) (h.hom.app b), h.inv_app_comp_hom_app, Category.Set.id_app] at this
+    exact congrArg ULift.down this
   }
 }

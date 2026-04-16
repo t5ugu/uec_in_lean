@@ -11,6 +11,10 @@ structure Functor (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] 
   map_comp {x y z : C} (f : x ⟶ y) (g : y ⟶ z) :
     map (f ≫ g) = (map f) ≫ (map g)
 
+/--
+  関手圏の対象は `Type max (u u' v v')`
+  関手圏の射は `Type max (u v')`
+ -/
 infixr:30 " ⥤ " => Functor
 
 namespace Functor

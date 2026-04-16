@@ -1,6 +1,6 @@
 import UecInLean.CategoryTheory.Category.Functor
 import UecInLean.CategoryTheory.Iso.Def
-import UecInLean.CategoryTheory.NatTrans
+import UecInLean.CategoryTheory.NatTrans.Whiskering
 
 namespace UecInLean.CategoryTheory.Iso
 

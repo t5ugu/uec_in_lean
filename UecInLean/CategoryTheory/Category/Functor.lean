@@ -1,4 +1,4 @@
-import UecInLean.CategoryTheory.NatTrans
+import UecInLean.CategoryTheory.NatTrans.Def
 
 namespace UecInLean.CategoryTheory.Category
 
@@ -8,9 +8,9 @@ instance (C : Type u) (D : Type u') [Category.{v} C] [Category.{v'} D] : Categor
   hom := NatTrans
   id := .id
   comp := .vcomp
-  id_comp _ := by ext; rw [NatTrans.vcomp_app, NatTrans.id_app, Category.id_comp]
-  comp_id _ := by ext; rw [NatTrans.vcomp_app, NatTrans.id_app, Category.comp_id]
-  comp_assoc _ _ _ := by ext; rw [NatTrans.vcomp_app, NatTrans.vcomp_app, NatTrans.vcomp_app, NatTrans.vcomp_app, Category.comp_assoc]
+  id_comp := NatTrans.id_vcomp
+  comp_id := NatTrans.vcomp_id
+  comp_assoc := NatTrans.vcomp_assoc
 
 @[simp, grind =]
 theorem Functor.hom_def {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]

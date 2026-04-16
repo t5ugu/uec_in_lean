@@ -36,38 +36,6 @@ def vcomp {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H)
 theorem vcomp_app {F G H : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H) (x : C)
 : (vcomp η θ).app x = η.app x ≫ θ.app x := rfl
 
-def whiskering (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) : (F ⋙ G ⋙ I) ⟹ (F ⋙ H ⋙ I) := {
-    app a := I.map (η.app (F.obj a))
-    naturality f := by {
-      simp only [Functor.comp_map, ← I.map_comp]
-      exact I.congrArg_map <| η.naturality (F.map f)
-    }
-  }
-
-@[simp]
-theorem whiskering_app (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (I : C ⥤ D) (a : A) : (whiskering F η I).app a = I.map (η.app (F.obj a)) := rfl
-
-def whiskerLeft {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : (F ⋙ H) ⟹ (G ⋙ H) := {
-    app a := H.map (η.app a)
-    naturality f := by {
-      simp only [Functor.comp_map, ← H.map_comp]
-      exact H.congrArg_map <| η.naturality f
-    }
-  }
-
-@[simp]
-theorem whiskerLeft_app {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) (a : A)
-: (whiskerLeft η H).app a = H.map (η.app a) := rfl
-
-def whiskerRight (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) : (F ⋙ G) ⟹ (F ⋙ H) := {
-    app a := η.app (F.obj a)
-    naturality f := η.naturality (F.map f)
-  }
-
-@[simp]
-theorem whiskerRight_app (F : A ⥤ B) {G H : B ⥤ C} (η : G ⟹ H) (a : A)
-: (whiskerRight F η).app a = η.app (F.obj a) := rfl
-
 def hcomp {F₁ F₂ : A ⥤ B} (η : F₁ ⟹ F₂) {G₁ G₂ : B ⥤ C} (θ : G₁ ⟹ G₂)
 : (F₁ ⋙ G₁) ⟹ (F₂ ⋙ G₂) := {
   app a := θ.app (F₁.obj a) ≫ G₂.map (η.app a)
@@ -94,8 +62,13 @@ theorem ext {C : Type u} {D : Type u'} [Category.{v} C] [Category.{v'} D]
   exact funext h
 }
 
-theorem whiskerLeft_eq_whiskering {F G : A ⥤ B} (η : F ⟹ G) (H : B ⥤ C) : whiskerLeft η H = whiskering (.id A) η H := by ext <;> simp
+@[simp]
+theorem vcomp_id {F G : C ⥤ D} (η : F ⟹ G) : vcomp η (id G) = η := by ext; simp
 
-theorem whiskerRight_eq_whiskering {G H : B ⥤ C} (η : G ⟹ H) (F : A ⥤ B) : whiskerRight F η = whiskering F η (.id C) := by ext <;> simp
+@[simp]
+theorem id_vcomp {F G : C ⥤ D} (η : F ⟹ G) : vcomp (id F) η = η := by ext; simp
+
+@[simp]
+theorem vcomp_assoc {F G H K : C ⥤ D} (η : F ⟹ G) (θ : G ⟹ H) (ι : H ⟹ K) : vcomp (vcomp η θ) ι = vcomp η (vcomp θ ι) := by ext; simp
 
 end NatTrans
