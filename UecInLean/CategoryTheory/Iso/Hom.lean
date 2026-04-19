@@ -5,7 +5,7 @@ import UecInLean.CategoryTheory.Iso.NaturalIso
 
 namespace UecInLean.CategoryTheory.Iso
 
-universe u v
+universe u v w
 
 open Functor
 
@@ -28,11 +28,11 @@ def Yoneda_lemma {C : Type u} [Category.{max u v} C] (a : C) (P : C ⥤ Type (ma
   inv_hom_id := by simp
 }
 
-private theorem comp_Hom_map_app_cancel {C : Type u} [Category.{v} C] {a b : C} (F : ULift (a ⟶ a) → ULift (b ⟶ a)) (f : a ⟶ b) (g : a ⟶ a)
-  : (F ≫ (Hom b).map f) ⟨g⟩ = ⟨(F ⟨g⟩).down ≫ f⟩
+theorem comp_Hom_map_app_cancel {C : Type u} [Category.{v} C] {α : Type (max v w)} {a b : C} (F : α → ULift.{w} (b ⟶ a)) (f : a ⟶ b) (g : α)
+  : (F ≫ (Hom b).map f) g = ⟨(F g).down ≫ f⟩
 := by simp
 
-theorem Hom_comp_app_id {C : Type u} [Category.{v} C] {a b : C} (F : ULift (a ⟶ b) → ULift (b ⟶ b)) (f : a ⟶ b)
+theorem Hom_comp_app_id {C : Type u} [Category.{v} C] {α : Type (max v w)} {a b : C} (F : ULift (a ⟶ b) → α) (f : a ⟶ b)
   : ((Hom a).map f ≫ F) ⟨𝟙 a⟩ = F ⟨f⟩
 := by simp
 

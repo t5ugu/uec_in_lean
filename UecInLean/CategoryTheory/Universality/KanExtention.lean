@@ -36,7 +36,7 @@ class HasLanLift (F : D ⥤ C) (E : U ⥤ C) extends HasUniversalArrow F.compRig
 --   unit : E ⟹ lanLift ⋙ F
 --   universality (S : U ⥤ D) (θ : E ⟹ S ⋙ F) : ∃! τ : lanLift ⟹ S, θ = unit.vcomp (τ.whiskerLeft F)
 
-class HasRanLift (F : D ⥤ C) (E : U ⥤ C) extends HasUniversalArrow F.op.compRight E.op
+class HasRanLift (F : D ⥤ C) (E : U ⥤ C) extends HasLanLift F.op E.op
 
 -- class HasRanLift (F : D ⥤ C) (E : U ⥤ C) where
 --   ranLift : U ⥤ D

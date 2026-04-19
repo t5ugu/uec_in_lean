@@ -55,18 +55,26 @@ def Functor.UniversalArrow (G : D ⥤ C) (c : C) : D ⥤ Type (max v v') := {
   map_comp := by simp
 }
 
-class HasUniversalArrow (G : D ⥤ C) (initial : C) extends (G.UniversalArrow initial).Representable
+@[simp]
+theorem Functor.UniversalArrow.obj_def {G : D ⥤ C} {c : C} (d : D) : (Functor.UniversalArrow G c).obj d = ULift (c ⟶ G.obj d) := rfl
 
-def HasUniversalArrow.limit {G : D ⥤ C} {initial : C} (h : HasUniversalArrow G initial) : D := h.repr
-def HasUniversalArrow.unit {G : D ⥤ C} {initial : C} (h : HasUniversalArrow G initial) : initial ⟶ G.obj h.limit
+@[simp]
+theorem Functor.UniversalArrow.map_def {G : D ⥤ C} {c : C} {d₁ d₂ : D} (f : d₁ ⟶ d₂) (h : ULift (c ⟶ G.obj d₁)) : (Functor.UniversalArrow G c).map f h = ⟨h.down ≫ (G.map f)⟩ := rfl
+
+class HasUniversalArrow (G : D ⥤ C) (c : C) extends (G.UniversalArrow c).Representable
+
+def HasUniversalArrow.limit {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) : D := h.repr
+
+def HasUniversalArrow.unit {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) : c ⟶ G.obj h.limit
   := (h.is_repr.obj h.repr).inv ⟨𝟙 _⟩ |>.down
-def HasUniversalArrow.default {G : D ⥤ C} {initial : C} (h : HasUniversalArrow G initial) {d : D} (f : initial ⟶ G.obj d) : h.limit ⟶ d := by {
+
+def HasUniversalArrow.default {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) : h.limit ⟶ d := (h.is_repr.obj d).hom ⟨f⟩ |>.down
+
+theorem HasUniversalArrow.universality {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) : f = h.unit ≫ G.map (h.default f) := by {
   sorry
 }
-theorem HasUniversalArrow.universality {G : D ⥤ C} {initial : C} (h : HasUniversalArrow G initial) {d : D} (f : initial ⟶ G.obj d) : f = h.unit ≫ G.map (h.default f) := by {
-  sorry
-}
-theorem HasUniversalArrow.allEq {G : D ⥤ C} {initial : C} (h : HasUniversalArrow G initial) {d : D} (f : initial ⟶ G.obj d) (g : h.limit ⟶ d) (w : f = h.unit ≫ G.map g) : g = h.default f := by {
+
+theorem HasUniversalArrow.allEq {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) (g : h.limit ⟶ d) (w : f = h.unit ≫ G.map g) : g = h.default f := by {
   sorry
 }
 
