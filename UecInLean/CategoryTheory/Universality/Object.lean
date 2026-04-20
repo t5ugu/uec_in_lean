@@ -65,17 +65,26 @@ class HasUniversalArrow (G : D ⥤ C) (c : C) extends (G.UniversalArrow c).Repre
 
 def HasUniversalArrow.limit {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) : D := h.repr
 
-def HasUniversalArrow.unit {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) : c ⟶ G.obj h.limit
+def HasUniversalArrow.arrow {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) : c ⟶ G.obj h.limit
   := (h.is_repr.obj h.repr).inv ⟨𝟙 _⟩ |>.down
 
-def HasUniversalArrow.default {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) : h.limit ⟶ d := (h.is_repr.obj d).hom ⟨f⟩ |>.down
+def HasUniversalArrow.hom {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) (d : D) (f : c ⟶ G.obj d) : h.limit ⟶ d := (h.is_repr.obj d).hom ⟨f⟩ |>.down
 
-theorem HasUniversalArrow.universality {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) : f = h.unit ≫ G.map (h.default f) := by {
-  sorry
+theorem HasUniversalArrow.universality {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) (d : D) (f : c ⟶ G.obj d) : f = h.arrow ≫ G.map (h.hom d f) := by {
+  have h₁
+    : (h.is_repr.symm.obj d).hom ⟨h.hom d f⟩ = ⟨((h.is_repr.symm.obj h.limit).hom ⟨𝟙 h.limit⟩).down ≫ G.map (h.hom d f)⟩
+    := by simpa using congrFun (h.is_repr.symm.naturality (h.hom d f)) ⟨𝟙 _⟩
+  have hcancel := congrFun (h.is_repr.obj d).hom_inv_id ⟨f⟩
+  exact congrArg ULift.down <| hcancel.symm.trans h₁
 }
 
-theorem HasUniversalArrow.allEq {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) {d : D} (f : c ⟶ G.obj d) (g : h.limit ⟶ d) (w : f = h.unit ≫ G.map g) : g = h.default f := by {
-  sorry
+theorem HasUniversalArrow.unique {G : D ⥤ C} {c : C} (h : HasUniversalArrow G c) (d : D) (f : c ⟶ G.obj d) (g : h.limit ⟶ d) (w : f = h.arrow ≫ G.map g) : g = h.hom d f := by {
+  apply congrArg ULift.down
+  have h₁ := congrFun (h.is_repr.symm.naturality g) ⟨𝟙 _⟩
+  have hfg : (h.is_repr.obj d).inv ⟨g⟩ = ⟨f⟩ := by simpa [w] using h₁
+  rw [← congrArg (h.is_repr.obj d).hom hfg]
+  have hcancelg := congrFun (h.is_repr.obj d).inv_hom_id ⟨g⟩
+  simpa using hcancelg.symm
 }
 
 end UecInLean.CategoryTheory

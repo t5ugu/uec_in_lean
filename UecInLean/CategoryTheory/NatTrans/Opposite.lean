@@ -14,3 +14,9 @@ def unop {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D] {F G : C�
   naturality _ := by {
     rw [Functor.unop_map, Functor.unop_map, ← Category.Opposite.comp_def, ← α.naturality, Category.Opposite.comp_def]
   }
+
+theorem op_inj {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D] {F G : C ⥤ D} (α β : F ⟹ G) (h : α.op = β.op) : α = β := by ext; apply congrFun (congrArg NatTrans.app h)
+
+theorem unop_inj {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D] {F G : Cᵒᵖ ⥤ Dᵒᵖ} (α β : F ⟹ G) (h : α.unop = β.unop) : α = β := by ext; apply congrFun (congrArg NatTrans.app h)
+
+end UecInLean.CategoryTheory.NatTrans
